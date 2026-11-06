@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+
+<!-- Explain that the requested page does not exist. -->
+<main class="error-page" aria-labelledby="error-heading">
+    <span class="eyebrow">404 ERROR</span>
+
+    <h1 id="error-heading">Page not found</h1>
+
+    <p>
+        The page you requested could not be found.
+        Check the address or return to the home page.
+    </p>
+
+    <a class="btn btn-primary" href="{{ url_for('index') }}">
+        Return home
+    </a>
+</main>
+
+{% endblock %}

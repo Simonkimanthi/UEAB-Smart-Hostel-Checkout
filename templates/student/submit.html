@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Student Checkout Request | UEAB{% endblock %}
+
+{% block content %}
+<div class="student-page">
+
+    <!-- Explain the checkout process and important submission requirements. -->
+    <div class="student-intro">
+        <span class="eyebrow">STUDENT PORTAL</span>
+
+        <h1>Holiday checkout request</h1>
+
+        <p>
+            Submit your hostel departure details to begin the
+            official clearance process.
+        </p>
+
+        <div class="student-info-panel">
+            <strong>Before you submit</strong>
+
+            <ul>
+                <li>Use your official student details.</li>
+                <li>Ensure your hostel and room information is correct.</li>
+                <li>Keep your private tracking reference after submission.</li>
+                <li>A gate pass is issued only after the required clearance and approval.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Collect student particulars and intended departure information. -->
+    <form
+        class="form-card student-form"
+        method="POST"
+    >
+        <!-- Protect the submission against cross-site request forgery. -->
+        <input
+            type="hidden"
+            name="csrf_token"
+            value="{{ csrf_token() }}"
+        >
+
+        <div class="student-form-heading">
+            <span class="form-step-label">SECTION 01</span>
+            <h2>Student information</h2>
+            <p>Enter the details used to identify your hostel record.</p>
+        </div>
+
+        <div class="form-grid">
+
+            <label class="full" for="student_name">
+                Full name
+                <input
+                    id="student_name"
+                    name="student_name"
+                    type="text"
+                    required
+                    maxlength="120"
+                    autocomplete="name"
+                    placeholder="Enter your full name"
+                >
+            </label>
+
+            <label for="registration_number">
+                Registration number
+                <input
+                    id="registration_number"
+                    name="registration_number"
+                    type="text"
+                    required
+                    maxlength="60"
+                    autocomplete="off"
+                    placeholder="e.g. UEAB/XXXX/XX"
+                >
+            </label>
+
+            <label for="phone">
+                Phone number
+                <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    required
+                    maxlength="30"
+                    autocomplete="tel"
+                    inputmode="tel"
+                    placeholder="e.g. 07XXXXXXXX"
+                >
+            </label>
+
+            <label for="hostel">
+                Hostel
+                <select
+                    id="hostel"
+                    name="hostel"
+                    required
+                >
+                    <option value="">Select your hostel</option>
+                    <option value="New Men's Hostel">New Men's Hostel</option>
+                    <option value="Old Men's Hostel">Old Men's Hostel</option>
+                    <option value="Box Hostel">Box Hostel</option>
+                    <option value="Annex Hostel">Annex Hostel</option>
+                </select>
+            </label>
+
+            <label for="room_number">
+                Room number
+                <input
+                    id="room_number"
+                    name="room_number"
+                    type="text"
+                    required
+                    maxlength="30"
+                    autocomplete="off"
+                    placeholder="Enter your room number"
+                >
+            </label>
+
+        </div>
+
+        <!-- Collect destination and intended departure date. -->
+        <div class="student-form-heading student-form-divider">
+            <span class="form-step-label">SECTION 02</span>
+            <h2>Departure details</h2>
+            <p>Tell the Dean's Office where and when you intend to travel.</p>
+        </div>
+
+        <div class="form-grid">
+
+            <label class="full" for="destination">
+                Destination
+                <input
+                    id="destination"
+                    name="destination"
+                    type="text"
+                    required
+                    maxlength="150"
+                    autocomplete="off"
+                    placeholder="Town, county or destination"
+                >
+            </label>
+
+            <label class="full" for="departure_date">
+                Intended departure date
+                <input
+                    id="departure_date"
+                    type="date"
+                    name="departure_date"
+                    required
+                >
+            </label>
+
+            <label class="full" for="reason">
+                Additional information
+                <span class="optional">Optional</span>
+
+                <textarea
+                    id="reason"
+                    name="reason"
+                    rows="4"
+                    maxlength="1000"
+                    placeholder="Include any relevant information for the Dean's Office"
+                ></textarea>
+            </label>
+
+        </div>
+
+        <!-- Submit the completed checkout request. -->
+        <div class="student-submit-area">
+            <button
+                class="btn btn-primary"
+                type="submit"
+            >
+                Submit checkout request
+            </button>
+
+            <p>
+                Your information will be submitted to the Dean's Office
+                for review.
+            </p>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

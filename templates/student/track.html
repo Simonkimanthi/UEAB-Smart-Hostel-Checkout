@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Track Checkout Request | UEAB{% endblock %}
+
+{% block content %}
+<div class="narrow-layout student-track-page">
+
+    <div class="section-heading">
+        <span class="eyebrow">STUDENT PORTAL</span>
+        <h1>Track your checkout request</h1>
+        <p>
+            Enter the private tracking reference you received after
+            submitting your request.
+        </p>
+    </div>
+
+    <!-- Allows students to retrieve their clearance status. -->
+    <form class="form-card student-track-form" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <label for="tracking-reference">Private tracking reference</label>
+        <input
+            id="tracking-reference"
+            name="reference"
+            type="text"
+            required
+            maxlength="100"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Enter your tracking reference"
+        >
+
+        <button class="btn btn-primary full-button" type="submit">
+            Track my request
+        </button>
+
+        <p class="form-footnote">
+            Your reference is private. Keep it safe and do not share it publicly.
+        </p>
+    </form>
+
+    {% if record %}
+    <div class="result-card student-result-card">
+
+        <!-- Displays the student's clearance record and current status. -->
+        <div class="student-result-heading">
+            <div>
+                <span class="eyebrow">CLEARANCE RECORD</span>
+                <h2>{{ record.student_name }}</h2>
+                <p>{{ record.registration_number }}</p>
+            </div>
+
+            <span class="student-status-pill">
+                {{ record.status|replace('_', ' ')|title }}
+            </span>
+        </div>
+
+        <!-- Shows the main details associated with the request. -->
+        <div class="detail-list">
+            <div>
+                <span>Hostel</span>
+                <strong>{{ record.hostel }}</strong>
+            </div>
+
+            <div>
+                <span>Room</span>
+                <strong>{{ record.room_number }}</strong>
+            </div>
+
+            <div>
+                <span>Departure date</span>
+                <strong>{{ record.departure_date }}</strong>
+            </div>
+
+            <div>
+                <span>Request status</span>
+                <strong class="status">
+                    {{ record.status|replace('_', ' ')|title }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Key clearance</span>
+                <strong>
+                    {{ record.key_status|replace('_', ' ')|title }}
+                </strong>
+            </div>
+        </div>
+
+        <!-- Visual representation of the clearance workflow. -->
+        <div class="student-progress">
+            <h3>Clearance progress</h3>
+
+            <div class="progress-step">
+                <span class="progress-marker complete">1</span>
+                <div>
+                    <strong>Request submitted</strong>
+                    <p>Your checkout request has been received.</p>
+                </div>
+            </div>
+
+            <div class="progress-step">
+                <span class="progress-marker {% if record.status in ['approved', 'rejected'] %}complete{% else %}current{% endif %}">
+                    2
+                </span>
+                <div>
+                    <strong>Dean's Office review</strong>
+                    <p>Your request is reviewed and a decision is recorded.</p>
+                </div>
+            </div>
+
+            <div class="progress-step">
+                <span class="progress-marker {% if record.status == 'approved' %}complete{% else %}pending{% endif %}">
+                    3
+                </span>
+                <div>
+                    <strong>Clearance and gate pass</strong>
+                    <p>
+                        Required key clearance and approval must be completed
+                        before a pass is issued.
+                    </p>
+                </div>
+            </div>
+
+            <div class="progress-step">
+                <span class="progress-marker pending">4</span>
+                <div>
+                    <strong>Security verification</strong>
+                    <p>
+                        Security verifies the gate pass and records
+                        your departure.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Provides a message appropriate to the current request status. -->
+        {% if record.status == 'approved' %}
+            <div class="student-status-message status-approved">
+                <strong>Request approved</strong>
+                <p>
+                    Your request has been approved by the Dean's Office.
+                    Confirm your key clearance and obtain your official
+                    gate pass before proceeding to Security.
+                </p>
+            </div>
+
+        {% elif record.status == 'rejected' %}
+            <div class="student-status-message status-rejected">
+                <strong>Request not approved</strong>
+                <p>
+                    Your request was not approved. Please contact the
+                    Dean's Office for clarification and guidance.
+                </p>
+            </div>
+
+        {% else %}
+            <div class="student-status-message status-pending">
+                <strong>Request under review</strong>
+                <p>
+                    Your request is still being processed. Check again later
+                    or contact the Dean's Office if you need assistance.
+                </p>
+            </div>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

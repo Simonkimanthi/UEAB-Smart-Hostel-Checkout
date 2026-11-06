@@ -1,0 +1,1924 @@
+/* ==========================================
+   1. GLOBAL DESIGN VARIABLES
+========================================== */
+
+:root {
+    --navy: #002147;
+    --navy-dark: #00152E;
+    --gold: #C59B27;
+    --gold-light: #FBF4E6;
+    --ink: #1C2833;
+    --muted: #5D6D7E;
+    --line: #E5E8EB;
+    --surface: #FFFFFF;
+    --background: #F4F6F9;
+    --green: #1E8449;
+    --red: #A93226;
+    --shadow: 0 10px 30px rgba(0, 33, 71, 0.08);
+}
+
+/* ==========================================
+   2. GLOBAL PAGE AND ELEMENT STYLES
+========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--background);
+    line-height: 1.6;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+img {
+    max-width: 100%;
+}
+
+/* ==========================================
+   3. HEADER AND NAVIGATION
+========================================== */
+
+.topbar {
+    min-height: 78px;
+    padding: 12px 6%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    background: white;
+    border-bottom: 1px solid var(--line);
+}
+
+.brand {
+    display: flex;
+    flex: 1;
+    min-width: 190px;
+    align-items: center;
+    gap: 12px;
+    color: var(--navy);
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 44px;
+    border: 2px solid var(--gold);
+    color: var(--navy);
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.brand strong,
+.brand small {
+    display: block;
+}
+
+.brand strong {
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.brand small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.ueab-header-logo {
+    width: 65px;
+    height: 65px;
+    object-fit: contain;
+    margin-left: 5px;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+nav a:hover,
+.back-link:hover {
+    color: var(--gold);
+}
+
+.nav-login {
+    color: var(--navy);
+    border: 1px solid var(--line);
+    padding: 9px 15px;
+    border-radius: 5px;
+}
+
+.nav-form {
+    margin: 0;
+}
+
+.nav-logout {
+    border: 0;
+    background: none;
+    color: var(--navy);
+    font: inherit;
+    cursor: pointer;
+}
+
+/* ==========================================
+   4. GENERAL PAGE LAYOUT
+========================================== */
+
+.page {
+    min-height: calc(100vh - 160px);
+}
+
+.section {
+    padding: 60px 8%;
+}
+
+.section-heading {
+    text-align: center;
+    margin: 0 auto 30px;
+    max-width: 650px;
+}
+
+.section-heading h1,
+.section-heading h2 {
+    color: var(--navy);
+    font-size: 32px;
+    margin: 0 0 8px;
+    letter-spacing: -.7px;
+}
+
+.section-heading p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 14px;
+}
+
+.eyebrow {
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 13px;
+}
+
+.centered {
+    justify-content: center;
+    text-align: center;
+}
+
+.back-link {
+    display: block;
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.small {
+    font-size: 11px;
+}
+
+/* ==========================================
+   5. HOMEPAGE HERO SECTION
+========================================== */
+
+.hero {
+    background: linear-gradient(115deg, var(--navy-dark), var(--navy));
+    color: white;
+    padding: 76px 8%;
+    display: grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap: 70px;
+    align-items: center;
+}
+
+.hero h1 {
+    font-size: clamp(34px, 4.2vw, 55px);
+    line-height: 1.13;
+    max-width: 680px;
+    margin: 0 0 20px;
+    letter-spacing: -1.5px;
+}
+
+.hero-copy > p {
+    max-width: 600px;
+    color: #D3DFE7;
+    font-size: 16px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+}
+
+.hero-note {
+    color: #B7C7D2;
+    font-size: 11px;
+    margin-top: 22px;
+}
+
+.hero-panel {
+    padding: 27px;
+    background: #FFFFFF0D;
+    border: 1px solid #FFFFFF24;
+    border-radius: 9px;
+}
+
+.panel-label {
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 17px;
+}
+
+.process-step {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #FFFFFF20;
+}
+
+.process-step:last-child {
+    border: 0;
+}
+
+.process-step > span {
+    color: var(--gold);
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.process-step strong,
+.process-step small {
+    display: block;
+}
+
+.process-step strong {
+    font-size: 14px;
+}
+
+.process-step small {
+    color: #B7C7D2;
+    font-size: 11px;
+}
+
+/* ==========================================
+   6. HOMEPAGE FEATURE CARDS
+========================================== */
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.feature-card {
+    padding: 25px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    box-shadow: var(--shadow);
+    transition: .2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-3px);
+    border-color: #C5A66D;
+}
+
+.feature-number {
+    color: var(--gold);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.feature-card h3 {
+    color: var(--navy);
+    font-size: 18px;
+    margin: 12px 0 5px;
+}
+
+.feature-card p {
+    color: var(--muted);
+    font-size: 13px;
+    min-height: 42px;
+}
+
+.text-link {
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.notice {
+    margin: 0 8% 55px;
+    padding: 17px 20px;
+    border-left: 3px solid var(--gold);
+    background: var(--gold-light);
+    color: #594A30;
+    font-size: 13px;
+}
+
+/* ==========================================
+   7. BUTTONS AND INTERACTIVE ELEMENTS
+========================================== */
+
+.btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border: 0;
+    border-radius: 5px;
+    padding: 12px 19px;
+    font: 600 13px "Segoe UI", Arial, sans-serif;
+    cursor: pointer;
+    transition: .18s ease;
+    text-align: center;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(.97);
+}
+
+.btn-primary {
+    background: var(--navy);
+    color: white;
+}
+
+.btn-gold {
+    background: var(--gold);
+    color: #182B39;
+}
+
+.btn-secondary {
+    background: #E8EEF2;
+    color: var(--navy);
+}
+
+.btn-outline-light {
+    border: 1px solid #9EB0BD;
+    color: white;
+}
+
+.btn-outline-dark {
+    border: 1px solid var(--line);
+    color: var(--navy);
+}
+
+.btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.full-button {
+    width: 100%;
+    margin-top: 8px;
+}
+
+/* ==========================================
+   8. FORMS AND INPUT FIELDS
+========================================== */
+
+.form-layout {
+    max-width: 1120px;
+    margin: 55px auto;
+    padding: 0 25px;
+    display: grid;
+    grid-template-columns: .72fr 1.28fr;
+    gap: 55px;
+    align-items: start;
+}
+
+.form-intro {
+    padding-top: 20px;
+}
+
+.form-intro h1,
+.login-aside h1 {
+    color: var(--navy);
+    font-size: 38px;
+    line-height: 1.15;
+    margin: 0 0 15px;
+}
+
+.form-intro > p,
+.login-aside > p {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.side-note {
+    margin-top: 35px;
+    padding: 20px;
+    background: var(--gold-light);
+    border-radius: 6px;
+    color: #594A30;
+    font-size: 13px;
+}
+
+.side-note p {
+    margin-bottom: 0;
+}
+
+.form-card,
+.result-card,
+.table-card,
+.verification-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 27px;
+    box-shadow: var(--shadow);
+}
+
+.form-card h2,
+.result-card h2,
+.table-card h2 {
+    color: var(--navy);
+    font-size: 18px;
+    margin: 0 0 18px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 17px;
+}
+
+label {
+    display: block;
+    color: #405462;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+input,
+select,
+textarea {
+    display: block;
+    width: 100%;
+    margin-top: 7px;
+    padding: 11px 12px;
+    border: 1px solid #D7E0E6;
+    border-radius: 5px;
+    background: white;
+    color: var(--ink);
+    font: 13px "Segoe UI", Arial, sans-serif;
+    outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px #C994351A;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.full {
+    grid-column: 1 / -1;
+}
+
+.optional,
+.muted {
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.form-subheading {
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+    margin-top: 9px !important;
+}
+
+.form-actions {
+    margin-top: 5px;
+}
+
+.form-footnote {
+    color: var(--muted);
+    font-size: 11px;
+    margin: 14px 0 0;
+}
+
+.narrow-layout {
+    max-width: 650px;
+    margin: 55px auto;
+    padding: 0 22px;
+}
+
+.narrow-layout .section-heading {
+    margin-bottom: 25px;
+}
+
+/* ==========================================
+   9. LOGIN PAGE
+========================================== */
+
+.login-wrap {
+    max-width: 980px;
+    margin: 65px auto;
+    padding: 0 22px;
+    display: grid;
+    grid-template-columns: 1fr .8fr;
+    gap: 55px;
+    align-items: center;
+}
+
+.login-aside {
+    padding: 30px;
+}
+
+.login-aside h1 {
+    color: var(--navy);
+}
+
+.login-points {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 30px;
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.login-points span::before {
+    content: "—";
+    color: var(--gold);
+    margin-right: 10px;
+}
+
+.login-icon {
+    color: var(--navy);
+    border: 2px solid var(--gold);
+    width: 55px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    margin-bottom: 22px;
+}
+
+.login-card h2 {
+    font-size: 23px;
+    margin-bottom: 0;
+}
+
+.login-card > p {
+    font-size: 12px;
+}
+
+/* ==========================================
+   10. FLASH MESSAGES AND NOTIFICATIONS
+========================================== */
+
+.flash-container {
+    max-width: 1200px;
+    margin: 20px auto 0;
+    padding: 0 22px;
+}
+
+.flash {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-size: 13px;
+}
+
+.flash.success {
+    background: #E6F3EB;
+    color: #245E40;
+}
+
+.flash.error {
+    background: #FAE9E9;
+    color: #8E3030;
+}
+
+/* ==========================================
+   11. DASHBOARD HEADINGS AND STATISTICS
+========================================== */
+
+.dashboard-heading {
+    max-width: 1250px;
+    margin: 42px auto 25px;
+    padding: 0 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.dashboard-heading h1 {
+    color: var(--navy);
+    margin: 0;
+    font-size: 32px;
+}
+
+.dashboard-heading p {
+    color: var(--muted);
+    margin: 3px 0;
+    font-size: 13px;
+}
+
+.user-chip {
+    background: white;
+    border: 1px solid var(--line);
+    padding: 9px 13px;
+    border-radius: 30px;
+    color: var(--navy);
+    font-size: 11px;
+}
+
+.stat-grid {
+    max-width: 1250px;
+    padding: 0 22px;
+    margin: 0 auto 22px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 18px 20px;
+}
+
+.stat-card span,
+.stat-card strong {
+    display: block;
+}
+
+.stat-card span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.stat-card strong {
+    color: var(--navy);
+    font-size: 27px;
+    margin-top: 3px;
+}
+
+/* ==========================================
+   12. DATA TABLES
+========================================== */
+
+.table-card {
+    max-width: 1206px;
+    margin: 0 auto 25px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.table-heading {
+    padding: 19px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+}
+
+.table-heading h2 {
+    margin: 0;
+}
+
+.table-heading > span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 760px;
+    text-align: left;
+}
+
+th {
+    background: #F7F9FA;
+    color: #71818D;
+    font-size: 10px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+
+th,
+td {
+    padding: 13px 17px;
+    border-bottom: 1px solid #EDF0F2;
+    font-size: 11px;
+    vertical-align: middle;
+}
+
+td {
+    color: #455865;
+}
+
+td strong,
+td small {
+    display: block;
+}
+
+td strong {
+    color: var(--navy);
+    font-size: 12px;
+}
+
+td small {
+    color: var(--muted);
+    margin-top: 3px;
+}
+
+.table-link {
+    color: var(--navy);
+    font-weight: 800;
+}
+
+.table-action {
+    border: 0;
+    padding: 6px 9px;
+    background: #EDF2F5;
+    border-radius: 4px;
+    color: var(--navy);
+    cursor: pointer;
+    font-size: 11px;
+}
+
+/* ==========================================
+   13. STATUS LABELS AND EMPTY STATES
+========================================== */
+
+.tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 20px;
+    background: #EDF1F4;
+    color: #566875;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.tag-green {
+    background: #E4F2E9;
+    color: #287451;
+}
+
+.tag-amber {
+    background: #F8EFDE;
+    color: #85652B;
+}
+
+.tag-red {
+    background: #F8E7E7;
+    color: #A43C3C;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 35px 20px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.empty-state.compact {
+    padding: 15px 0;
+}
+
+/* ==========================================
+   14. DETAIL AND CLEARANCE MANAGEMENT
+========================================== */
+
+.two-column {
+    max-width: 1206px;
+    margin: 0 auto 25px;
+    padding: 0 22px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.two-column .form-card {
+    min-width: 0;
+}
+
+.stack-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.current-status {
+    background: #F2F5F7;
+    padding: 12px;
+    margin-bottom: 18px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.current-status strong {
+    color: var(--navy);
+}
+
+.divider {
+    height: 1px;
+    background: var(--line);
+    margin: 24px 0;
+}
+
+.admin-columns {
+    margin-top: 0;
+}
+
+/* ==========================================
+   15. SECURITY DASHBOARD AND VERIFICATION
+========================================== */
+
+.security-action {
+    max-width: 1162px;
+    margin: 0 auto 22px;
+    padding: 22px;
+    background: var(--navy);
+    color: white;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.security-action h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.security-action p {
+    margin: 4px 0 0;
+    color: #C9D6DF;
+    font-size: 12px;
+}
+
+.verification-card {
+    margin-top: 20px;
+}
+
+.verification-status {
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.verification-status.valid {
+    background: #E4F2E9;
+    color: var(--green);
+}
+
+.verification-status.invalid {
+    background: #F8E7E7;
+    color: var(--red);
+}
+
+.verification-card h2 {
+    color: var(--navy);
+}
+
+.obligation {
+    padding: 13px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.obligation strong,
+.obligation span,
+.obligation small {
+    display: block;
+}
+
+.obligation strong {
+    color: var(--navy);
+    font-size: 13px;
+}
+
+.obligation span,
+.obligation small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* ==========================================
+   16. GATE PASS PAGE
+========================================== */
+
+.pass-page {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 22px;
+}
+
+.gate-pass {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: white;
+    border: 1px solid #D5DCE2;
+    box-shadow: 0 15px 45px rgba(16, 43, 64, .10);
+    margin: 20px 0;
+}
+
+.gate-pass::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    width: min(68%, 510px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -45%);
+    background-image: url("../images/ueab-seal.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: .075;
+}
+
+.gate-pass > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Gate pass university heading and branding. */
+.pass-document-heading {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    padding: 27px 34px;
+    border-bottom: 4px solid var(--gold);
+    background: white;
+}
+
+.pass-heading-text {
+    flex: 1;
+    text-align: center;
+}
+
+.pass-university,
+.pass-location,
+.pass-document-title,
+.pass-subtitle {
+    display: block;
+}
+
+.pass-university {
+    color: var(--navy);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+}
+
+.pass-location {
+    color: #657786;
+    font-size: 10px;
+    letter-spacing: 2px;
+    margin-top: 3px;
+}
+
+.pass-document-title {
+    color: var(--navy);
+    font-size: 25px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    margin-top: 16px;
+}
+
+.pass-subtitle {
+    color: #7A8791;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+}
+
+.pass-logo {
+    width: 105px;
+    height: 105px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* Gate pass reference number. */
+.pass-reference {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin: 22px 32px 0;
+    padding: 12px 16px;
+    background: #F5F7F9;
+    border-left: 4px solid var(--gold);
+}
+
+.pass-reference span {
+    color: #637481;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.pass-reference strong {
+    color: var(--navy);
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+/* Gate pass information section headings. */
+.pass-section-label {
+    margin: 27px 32px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #C99435;
+    color: var(--navy);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+}
+
+/* Gate pass student information and QR code layout. */
+.pass-body {
+    display: grid;
+    grid-template-columns: 1fr 205px;
+    gap: 30px;
+    padding: 24px 32px 30px;
+}
+
+.pass-student-name {
+    margin-bottom: 17px;
+}
+
+.pass-student-name span {
+    color: #7A8791;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+}
+
+.pass-details h1 {
+    color: var(--navy);
+    font-size: 26px;
+    line-height: 1.25;
+    margin: 4px 0 0;
+}
+
+.pass-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 11px 0;
+    border-bottom: 1px solid #E8EDF0;
+}
+
+.pass-field span {
+    color: #71808B;
+    font-size: 11px;
+}
+
+.pass-field strong {
+    color: var(--navy);
+    font-size: 12px;
+    text-align: right;
+}
+
+/* QR code presentation and reference details. */
+.qr-panel {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 17px;
+    border: 1px solid #DCE3E8;
+    background: rgba(255, 255, 255, .88);
+}
+
+.qr-panel img {
+    width: 155px;
+    height: 155px;
+    object-fit: contain;
+}
+
+.qr-panel strong {
+    color: var(--navy);
+    font-size: 10px;
+    letter-spacing: .8px;
+    margin-top: 12px;
+}
+
+.qr-panel small {
+    color: #7A8791;
+    font-size: 9px;
+    margin-top: 4px;
+}
+
+.qr-reference {
+    color: #7A8791;
+    font-size: 8px;
+    margin-top: 8px;
+    overflow-wrap: anywhere;
+}
+
+/* Gate pass authorization information. */
+.pass-authorization {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 0 32px 24px;
+    padding: 17px 20px;
+    border-top: 1px solid #DCE3E8;
+    border-bottom: 1px solid #DCE3E8;
+}
+
+.pass-authorization strong,
+.pass-authorization span {
+    display: block;
+}
+
+.pass-authorization strong {
+    color: var(--navy);
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.pass-authorization span {
+    color: #7A8791;
+    font-size: 10px;
+}
+
+.authorization-mark {
+    border: 2px solid #B18A3E;
+    color: #98732E;
+    padding: 7px 16px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    transform: rotate(-3deg);
+}
+
+/* Gate pass footer and decorative university branding. */
+.pass-footer {
+    padding: 15px 30px;
+    background: #F5F7F8;
+    color: #647480;
+    text-align: center;
+    font-size: 9px;
+    line-height: 1.7;
+}
+
+.pass-bottom-line {
+    height: 5px;
+    background: linear-gradient(
+        90deg,
+        var(--navy) 0%,
+        var(--navy) 72%,
+        var(--gold) 72%,
+        var(--gold) 100%
+    );
+}
+
+/* Live gate pass validation status. */
+.pass-live-status {
+    margin: 20px 32px 0;
+    padding: 13px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.pass-live-status.status-valid {
+    background: #E4F2E9;
+    color: #287451;
+    border: 1px solid #B8D9C5;
+}
+
+.pass-live-status.status-invalid {
+    background: #F8E7E7;
+    color: #A43C3C;
+    border: 1px solid #E7BCBC;
+}
+
+/* Gate pass actions and departure controls. */
+.pass-actions {
+    text-align: center;
+    margin: 22px 0 40px;
+}
+
+.pass-actions form {
+    margin-top: 14px;
+}
+
+.pass-actions .btn {
+    min-width: 210px;
+}
+
+.pass-action-note {
+    display: block;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* ==========================================
+   17. STUDENT CHECKOUT EXPERIENCE
+========================================== */
+
+.student-page {
+    display: grid;
+    grid-template-columns: minmax(240px, .78fr) minmax(0, 1.5fr);
+    gap: 2rem;
+    align-items: start;
+    max-width: 1120px;
+    margin: 2rem auto;
+}
+
+.student-intro {
+    padding: 1.25rem 0;
+}
+
+.student-intro h1 {
+    line-height: 1.12;
+    margin: .65rem 0 1rem;
+}
+
+.student-intro > p,
+.student-form-heading p {
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.student-info-panel {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--gold);
+    border-radius: .65rem;
+    background: var(--surface);
+}
+
+.student-info-panel ul,
+.student-next-steps ol {
+    padding-left: 1.25rem;
+    line-height: 1.9;
+    color: var(--muted);
+}
+
+.student-form {
+    min-width: 0;
+}
+
+.student-form-heading {
+    margin-bottom: 1.25rem;
+}
+
+.student-form-heading h2 {
+    margin: .35rem 0;
+}
+
+.form-step-label {
+    color: var(--gold);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.student-form-divider {
+    border-top: 1px solid var(--line);
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+}
+
+.student-submit-area {
+    margin-top: 1.5rem;
+}
+
+.student-submit-area p {
+    color: var(--muted);
+    font-size: .84rem;
+    margin-top: .75rem;
+}
+
+/* ==========================================
+   18. STUDENT SUBMISSION SUCCESS PAGE
+========================================== */
+
+.success-card {
+    max-width: 650px;
+    margin: 65px auto;
+    padding: 45px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.success-symbol {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: #E5F2EB;
+    color: var(--green);
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.success-card h1 {
+    color: var(--navy);
+    font-size: 30px;
+    line-height: 1.2;
+}
+
+.success-card > p {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.reference-box {
+    margin: 25px 0 12px;
+    padding: 18px;
+    background: #F1F5F7;
+    border: 1px dashed #AAB9C3;
+    border-radius: 6px;
+}
+
+.reference-box span,
+.reference-box strong {
+    display: block;
+}
+
+.reference-box span {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.reference-box strong {
+    color: var(--navy);
+    font-size: 23px;
+    letter-spacing: 2px;
+    margin-top: 6px;
+    overflow-wrap: anywhere;
+}
+
+.warning-text {
+    color: #85662E !important;
+}
+
+.student-success-page {
+    max-width: 760px;
+    margin: 2rem auto;
+}
+
+.student-success-card {
+    width: 100%;
+}
+
+.student-reference-box {
+    display: grid;
+    gap: .7rem;
+}
+
+.student-reference-box strong {
+    overflow-wrap: anywhere;
+}
+
+.reference-copy {
+    justify-self: start;
+    border: 1px solid var(--line);
+    border-radius: .4rem;
+    background: white;
+    padding: .55rem .85rem;
+    color: var(--navy);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.student-next-steps {
+    text-align: left;
+    margin: 1.5rem 0;
+    padding: 1.2rem;
+    background: #F8FAFC;
+    border-radius: .65rem;
+}
+
+.student-next-steps h3 {
+    margin-top: 0;
+}
+
+/* ==========================================
+   19. STUDENT REQUEST TRACKING
+========================================== */
+
+.student-track-page {
+    max-width: 760px;
+}
+
+.student-track-form {
+    margin-bottom: 1.5rem;
+}
+
+.student-result-card {
+    margin-top: 1.5rem;
+}
+
+.student-result-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.student-result-heading h2 {
+    margin: .4rem 0;
+}
+
+.student-result-heading p {
+    color: var(--muted);
+    margin: 0;
+}
+
+.student-status-pill {
+    border-radius: 999px;
+    padding: .4rem .75rem;
+    background: #EEF2F7;
+    color: #334155;
+    font-size: .78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Student checkout progress indicator. */
+.student-progress {
+    margin-top: 1.8rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--line);
+}
+
+.student-progress h3 {
+    margin-bottom: 1.2rem;
+}
+
+.progress-step {
+    display: flex;
+    gap: .9rem;
+    position: relative;
+    padding-bottom: 1.25rem;
+}
+
+.progress-step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    bottom: 0;
+    width: 2px;
+    background: #DBE2E8;
+}
+
+.progress-marker {
+    z-index: 1;
+    flex: 0 0 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: .8rem;
+    background: #E2E8F0;
+    color: #475569;
+}
+
+.progress-marker.complete {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+
+.progress-marker.current {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.progress-step strong {
+    display: block;
+    margin: .2rem 0;
+}
+
+.progress-step p {
+    margin: .25rem 0 0;
+    color: var(--muted);
+    font-size: .88rem;
+    line-height: 1.5;
+}
+
+/* Student request status messages. */
+.student-status-message {
+    margin-top: 1.3rem;
+    padding: 1rem 1.1rem;
+    border-radius: .55rem;
+    border: 1px solid var(--line);
+}
+
+.student-status-message p {
+    margin: .35rem 0 0;
+    line-height: 1.6;
+}
+
+.status-approved {
+    background: #F0FDF4;
+    border-color: #BBF7D0;
+}
+
+.status-rejected {
+    background: #FFF7F7;
+    border-color: #FECACA;
+}
+
+.status-pending {
+    background: #FFFBEB;
+    border-color: #FDE68A;
+}
+
+/* ==========================================
+   20. ERROR PAGES
+========================================== */
+
+.error-page {
+    text-align: center;
+    max-width: 550px;
+    margin: 100px auto;
+    padding: 25px;
+}
+
+.error-page h1 {
+    color: var(--navy);
+}
+
+.error-page p {
+    color: var(--muted);
+}
+
+/* ==========================================
+   21. FOOTER AND PROJECT BRANDING
+========================================== */
+
+footer {
+    padding: 25px 6%;
+    background: #102B40;
+    color: #E0E8ED;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    font-size: 11px;
+}
+
+.footer-right {
+    text-align: right;
+    color: #B5C5CF;
+}
+
+.footer-right a {
+    color: #60A5FA;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgba(96, 165, 250, .5);
+    text-underline-offset: 4px;
+    transition: color .2s ease, text-decoration-color .2s ease;
+}
+
+.footer-right a:hover {
+    color: #93C5FD;
+    text-decoration-color: #93C5FD;
+}
+
+/* ==========================================
+   22. TABLET RESPONSIVE LAYOUT
+========================================== */
+
+@media (max-width: 850px) {
+    .topbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .brand {
+        flex: 1;
+    }
+
+    .topbar nav {
+        order: 3;
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 13px;
+    }
+
+    .ueab-header-logo {
+        order: 2;
+        width: 54px;
+        height: 54px;
+    }
+
+    .hero {
+        grid-template-columns: 1fr;
+        gap: 35px;
+        padding: 55px 7%;
+    }
+
+    .form-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin-top: 25px;
+    }
+
+    .form-intro {
+        padding-top: 0;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .login-wrap {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-top: 25px;
+    }
+
+    .login-aside {
+        padding: 15px;
+    }
+
+    .two-column {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================
+   23. MOBILE RESPONSIVE LAYOUT
+========================================== */
+
+@media (max-width: 560px) {
+    .topbar {
+        padding: 13px 18px;
+    }
+
+    nav {
+        font-size: 11px;
+    }
+
+    .hero {
+        padding: 43px 22px;
+    }
+
+    .hero h1 {
+        font-size: 36px;
+    }
+
+    .section {
+        padding: 40px 20px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .full {
+        grid-column: auto;
+    }
+
+    .form-card {
+        padding: 20px;
+    }
+
+    .success-card {
+        margin: 25px 15px;
+        padding: 28px 20px;
+    }
+
+    .dashboard-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        margin-top: 25px;
+    }
+
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .security-action {
+        margin: 0 15px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .security-action .btn {
+        width: 100%;
+    }
+
+    .pass-body {
+        grid-template-columns: 1fr;
+        padding: 20px;
+    }
+
+    .qr-panel {
+        order: -1;
+    }
+
+    footer {
+        flex-direction: column;
+    }
+
+    .footer-right {
+        text-align: left;
+    }
+}
+
+/* ==========================================
+   24. GATE PASS MOBILE RESPONSIVENESS
+========================================== */
+
+@media (max-width: 650px) {
+    .pass-document-heading {
+        padding: 20px 15px;
+        gap: 10px;
+    }
+
+    .pass-university {
+        font-size: 12px;
+    }
+
+    .pass-document-title {
+        font-size: 19px;
+    }
+
+    .pass-logo {
+        width: 72px;
+        height: 72px;
+    }
+
+    .pass-body {
+        grid-template-columns: 1fr;
+        padding: 20px;
+    }
+
+    .qr-panel {
+        grid-row: 1;
+    }
+
+    .pass-reference,
+    .pass-section-label {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+
+    .pass-authorization {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+}
+
+/* ==========================================
+   25. STUDENT MOBILE RESPONSIVENESS
+========================================== */
+
+@media (max-width: 760px) {
+    .student-page {
+        grid-template-columns: 1fr;
+        margin: 1rem auto;
+        gap: 1rem;
+    }
+
+    .student-intro {
+        padding: .5rem 0;
+    }
+
+    .student-info-panel {
+        margin-top: 1rem;
+    }
+
+    .student-result-heading {
+        flex-direction: column;
+    }
+
+    .student-success-page {
+        margin: 1rem auto;
+    }
+}
+
+/* ==========================================
+   26. GATE PASS PRINT SETTINGS
+========================================== */
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    .topbar,
+    footer,
+    .back-link,
+    .centered,
+    .flash-container,
+    .pass-actions {
+        display: none !important;
+    }
+
+    .page {
+        min-height: 0;
+    }
+
+    .pass-page {
+        margin: 0;
+        max-width: none;
+        padding: 0;
+    }
+
+    .gate-pass {
+        box-shadow: none;
+        border: 1px solid #CBD3DA;
+        margin: 0;
+        break-inside: avoid;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .gate-pass::before {
+        opacity: .09;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .pass-header,
+    .pass-document-heading,
+    .pass-footer,
+    .pass-live-status,
+    .qr-panel {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

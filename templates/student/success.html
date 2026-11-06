@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Request Submitted | UEAB{% endblock %}
+
+{% block content %}
+<div class="student-success-page">
+    <div class="success-card student-success-card">
+
+        <!-- Confirms successful submission. -->
+        <div class="success-symbol" role="img" aria-label="Success">✓</div>
+        <span class="eyebrow">REQUEST RECEIVED</span>
+
+        <h1>Your checkout request has been submitted.</h1>
+
+        <p>
+            Your request has entered the clearance process and is awaiting
+            review by the Dean's Office.
+        </p>
+
+        <!-- Displays the private reference used to track this request. -->
+        <div class="reference-box student-reference-box">
+            <span>YOUR PRIVATE TRACKING REFERENCE</span>
+
+            <strong id="student-reference">{{ reference }}</strong>
+
+            <button
+                class="reference-copy"
+                id="copy-reference-button"
+                type="button"
+                onclick="copyStudentReference()"
+                aria-label="Copy your tracking reference"
+            >
+                Copy reference
+            </button>
+
+            <span
+                id="copy-reference-status"
+                class="sr-only"
+                role="status"
+                aria-live="polite"
+            ></span>
+        </div>
+
+        <p class="warning-text">
+            Keep this reference safe. You will need it to track your request.
+            Do not share it publicly.
+        </p>
+
+        <!-- Explains the remaining clearance process. -->
+        <div class="student-next-steps">
+            <h3>What happens next?</h3>
+
+            <ol>
+                <li>The Dean's Office reviews your checkout request.</li>
+                <li>Your key clearance and any outstanding requirements are checked.</li>
+                <li>Once approved, your digital gate pass becomes available.</li>
+                <li>Campus Security verifies your pass and records your departure.</li>
+            </ol>
+        </div>
+
+        <!-- Provides navigation to tracking and the home page. -->
+        <div class="hero-actions centered">
+            <a class="btn btn-primary" href="{{ url_for('student_track') }}">
+                Track my request
+            </a>
+
+            <a class="btn btn-outline-dark" href="{{ url_for('index') }}">
+                Return home
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+/**
+ * Copies the private checkout tracking reference.
+ * Uses the Clipboard API when available and a fallback otherwise.
+ */
+async function copyStudentReference() {
+    const referenceElement = document.getElementById("student-reference");
+    const button = document.getElementById("copy-reference-button");
+    const status = document.getElementById("copy-reference-status");
+
+    if (!referenceElement || !button || !status) {
+        return;
+    }
+
+    const reference = referenceElement.textContent.trim();
+
+    if (!reference) {
+        status.textContent = "No tracking reference is available.";
+        return;
+    }
+
+    button.disabled = true;
+
+    try {
+        // Prefer the modern Clipboard API in secure browser contexts.
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(reference);
+        } else {
+            // Fallback for browsers without Clipboard API support.
+            const field = document.createElement("textarea");
+
+            field.value = reference;
+            field.setAttribute("readonly", "");
+            field.style.position = "fixed";
+            field.style.opacity = "0";
+
+            document.body.appendChild(field);
+            field.select();
+
+            const copied = document.execCommand("copy");
+            field.remove();
+
+            if (!copied) {
+                throw new Error("Clipboard operation failed.");
+            }
+        }
+
+        button.textContent = "Copied";
+        status.textContent = "Tracking reference copied successfully.";
+
+    } catch (error) {
+        button.textContent = "Copy failed";
+        status.textContent = "Unable to copy the reference. Please copy it manually.";
+
+    } finally {
+        button.disabled = false;
+    }
+}
+</script>
+{% endblock %}

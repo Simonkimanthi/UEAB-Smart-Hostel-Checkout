@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied{% endblock %}
+
+{% block content %}
+
+<!-- Display a clear message when a user lacks permission to access a resource. -->
+<main class="error-page" aria-labelledby="error-heading">
+    <span class="eyebrow">403 ERROR</span>
+
+    <h1 id="error-heading">Access denied</h1>
+
+    <p>
+        You do not have permission to access this section.
+        Contact the system administrator if you believe this is an error.
+    </p>
+
+    <a class="btn btn-primary" href="{{ url_for('index') }}">
+        Return home
+    </a>
+</main>
+
+{% endblock %}

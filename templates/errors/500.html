@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}System Error{% endblock %}
+
+{% block content %}
+
+<!-- Display a safe message without exposing internal system details. -->
+<main class="error-page" aria-labelledby="error-heading">
+    <span class="eyebrow">500 ERROR</span>
+
+    <h1 id="error-heading">Something went wrong</h1>
+
+    <p>
+        The system encountered an unexpected error.
+        Please try again or contact the system administrator.
+    </p>
+
+    <a class="btn btn-primary" href="{{ url_for('index') }}">
+        Return home
+    </a>
+</main>
+
+{% endblock %}

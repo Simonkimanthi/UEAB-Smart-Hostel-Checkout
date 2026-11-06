@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Login{% endblock %}
+
+{% block content %}
+<div class="login-wrap">
+
+    <!-- Introduce the staff portal and its authorized departments. -->
+    <section class="login-aside" aria-labelledby="login-heading">
+        <span class="eyebrow">AUTHORIZED PERSONNEL</span>
+
+        <h1 id="login-heading">Staff access portal</h1>
+
+        <p>
+            Secure access to hostel checkout administration,
+            clearance review and departure verification.
+        </p>
+
+        <div class="login-points" aria-label="Authorized departments">
+            <span>Dean's Office</span>
+            <span>Campus Security</span>
+            <span>System Administration</span>
+        </div>
+    </section>
+
+    <!-- Submit staff credentials securely to the existing login route. -->
+    <form
+        class="form-card login-card"
+        method="POST"
+        autocomplete="on"
+    >
+        <div class="login-icon" aria-hidden="true">UEAB</div>
+
+        <h2>Welcome back</h2>
+        <p class="muted">Sign in using your staff credentials.</p>
+
+        <!-- Include the session CSRF token for POST protection. -->
+        <input
+            type="hidden"
+            name="csrf_token"
+            value="{{ csrf_token() }}"
+        >
+
+        <label for="username">Username</label>
+        <input
+            id="username"
+            name="username"
+            type="text"
+            required
+            maxlength="40"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="Enter username"
+        >
+
+        <label for="password">Password</label>
+        <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autocomplete="current-password"
+            placeholder="Enter password"
+        >
+
+        <button
+            class="btn btn-primary full-button"
+            type="submit"
+        >
+            Sign In
+        </button>
+
+        <p class="form-footnote">
+            This portal is restricted to authorized staff.
+        </p>
+    </form>
+</div>
+{% endblock %}

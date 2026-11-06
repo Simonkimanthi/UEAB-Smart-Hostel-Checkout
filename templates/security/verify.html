@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Gate Pass{% endblock %}
+
+{% block content %}
+<div class="narrow-layout">
+
+    <!-- Introduce the campus security verification facility. -->
+    <div class="section-heading">
+        <span class="eyebrow">CAMPUS SECURITY</span>
+        <h1>Gate pass verification</h1>
+        <p>
+            Scan a gate pass using your device camera, or enter
+            the pass token manually.
+        </p>
+    </div>
+
+    <!-- Live QR code scanner. -->
+    <div class="form-card" style="margin-bottom: 20px; text-align: center;">
+        <h2>Live Camera Scanner</h2>
+
+        <div
+            id="qr-reader"
+            style="width: 100%; max-width: 450px; margin: 10px auto;"
+        ></div>
+
+        <div
+            id="qr-reader-results"
+            role="status"
+            aria-live="polite"
+            style="margin-top: 10px; font-weight: bold; color: var(--navy);"
+        ></div>
+    </div>
+
+    <!-- Allow manual entry or submission of a scanned token. -->
+    <form
+        class="form-card"
+        method="GET"
+        id="verify-form"
+    >
+        <label for="token-input">Gate pass token</label>
+
+        <input
+            name="token"
+            id="token-input"
+            type="text"
+            value="{{ token }}"
+            required
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="Enter or scan pass token"
+        >
+
+        <button
+            class="btn btn-primary full-button"
+            type="submit"
+        >
+            Verify Pass
+        </button>
+    </form>
+
+    <!-- Display the result returned by the existing verification route. -->
+    {% if token and record %}
+        <div class="verification-card">
+
+            {% if record.revoked %}
+                <div class="verification-status invalid">
+                    PASS REVOKED
+                </div>
+            {% elif record.used_at %}
+                <div class="verification-status invalid">
+                    ALREADY USED
+                </div>
+            {% elif record.status != 'approved' %}
+                <div class="verification-status invalid">
+                    NOT APPROVED
+                </div>
+            {% else %}
+                <div class="verification-status valid">
+                    VALID GATE PASS
+                </div>
+            {% endif %}
+
+            <h2>{{ record.student_name }}</h2>
+
+            <div class="detail-list">
+                <div>
+                    <span>Registration</span>
+                    <strong>{{ record.registration_number }}</strong>
+                </div>
+
+                <div>
+                    <span>Hostel</span>
+                    <strong>{{ record.hostel }}</strong>
+                </div>
+
+                <div>
+                    <span>Room</span>
+                    <strong>{{ record.room_number }}</strong>
+                </div>
+
+                <div>
+                    <span>Departure date</span>
+                    <strong>{{ record.departure_date }}</strong>
+                </div>
+
+                <div>
+                    <span>Pass issued</span>
+                    <strong>{{ record.issued_at }}</strong>
+                </div>
+
+                {% if record.used_at %}
+                    <div>
+                        <span>Departure recorded</span>
+                        <strong>{{ record.used_at }}</strong>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Only an approved, unused and unrevoked pass can be submitted. -->
+            {% if not record.revoked and not record.used_at and record.status == 'approved' %}
+                <form
+                    method="POST"
+                    action="{{ url_for('record_departure', pass_id=record.id) }}"
+                    onsubmit="return confirm('Confirm that this student is departing campus now?')"
+                >
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token() }}"
+                    >
+
+                    <button
+                        class="btn btn-gold full-button"
+                        type="submit"
+                    >
+                        Confirm Student Departure
+                    </button>
+                </form>
+            {% endif %}
+
+        </div>
+
+    {% elif token %}
+        <div class="flash error" role="alert">
+            No gate pass was found for that token.
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Load the QR scanning library. Camera access requires HTTPS or localhost. -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const readerElement = document.getElementById("qr-reader");
+    const resultElement = document.getElementById("qr-reader-results");
+    const tokenInput = document.getElementById("token-input");
+    const verifyForm = document.getElementById("verify-form");
+
+    let html5QrCode = null;
+    let scannerStarted = false;
+    let scanProcessing = false;
+
+    // Display scanner messages without inserting untrusted HTML.
+    function showScannerMessage(message) {
+        resultElement.textContent = message;
+    }
+
+    // Accept either a raw token or a URL containing a gate pass token.
+    function extractToken(decodedText) {
+        const scannedValue = decodedText.trim();
+
+        try {
+            const scannedUrl = new URL(scannedValue);
+
+            const pathParts = scannedUrl.pathname
+                .split("/")
+                .filter(Boolean);
+
+            const passIndex = pathParts.indexOf("pass");
+
+            if (passIndex !== -1 && pathParts[passIndex + 1]) {
+                return pathParts[passIndex + 1];
+            }
+
+            // Do not treat unrelated URLs as valid gate pass tokens.
+            return "";
+        } catch (error) {
+            // Values that are not URLs are treated as manually entered tokens.
+            return scannedValue;
+        }
+    }
+
+    // Stop scanning before submitting the verification request.
+    async function onScanSuccess(decodedText) {
+
+        if (scanProcessing) {
+            return;
+        }
+
+        const token = extractToken(decodedText);
+
+        if (!token) {
+            showScannerMessage("The scanned QR code does not contain a valid gate pass token.");
+            return;
+        }
+
+        scanProcessing = true;
+        tokenInput.value = token;
+
+        showScannerMessage("QR code scanned. Verifying gate pass...");
+
+        try {
+            if (html5QrCode && scannerStarted) {
+                await html5QrCode.stop();
+                scannerStarted = false;
+            }
+        } catch (error) {
+            console.error("Scanner shutdown error:", error);
+        }
+
+        // Submit the existing GET verification form.
+        verifyForm.submit();
+    }
+
+    // Start the camera scanner when the QR library is available.
+    if (typeof Html5Qrcode === "undefined") {
+        showScannerMessage(
+            "The QR scanner library could not be loaded. Enter the pass token manually."
+        );
+        return;
+    }
+
+    try {
+        html5QrCode = new Html5Qrcode("qr-reader");
+
+        const scannerConfig = {
+            fps: 10,
+            qrbox: {
+                width: 250,
+                height: 250
+            }
+        };
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            scannerConfig,
+            onScanSuccess
+        ).then(function () {
+            scannerStarted = true;
+            showScannerMessage("Camera ready. Position the QR code inside the scanning area.");
+        }).catch(function (error) {
+            console.error("Camera startup error:", error);
+
+            showScannerMessage(
+                "Camera unavailable or permission denied. You can still enter or paste the token manually."
+            );
+        });
+
+    } catch (error) {
+        console.error("QR scanner initialization error:", error);
+
+        showScannerMessage(
+            "Unable to initialize the QR scanner. Please enter the pass token manually."
+        );
+    }
+
+    // Release camera resources when the verification page is left.
+    window.addEventListener("pagehide", function () {
+        if (html5QrCode && scannerStarted) {
+            html5QrCode.stop().catch(function (error) {
+                console.error("Camera cleanup error:", error);
+            });
+        }
+    });
+
+});
+</script>
+{% endblock %}

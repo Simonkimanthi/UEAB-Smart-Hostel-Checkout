@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Home | UEAB Smart Hostel Checkout{% endblock %}
+
+{% block content %}
+
+<!-- Main introduction and overview of the checkout process. -->
+<section class="hero" aria-labelledby="hero-heading">
+
+    <div class="hero-copy">
+        <span class="eyebrow">
+            UNIVERSITY OF EASTERN AFRICA, BARATON
+        </span>
+
+        <h1 id="hero-heading">
+            A simpler, smarter way to complete your hostel clearance.
+        </h1>
+
+        <p>
+            Submit your holiday checkout request, complete key clearance,
+            and receive a secure digital gate pass through one coordinated
+            process.
+        </p>
+
+        <!-- Primary student actions. -->
+        <div class="hero-actions">
+            <a class="btn btn-gold" href="{{ url_for('student_submit') }}">
+                Start Checkout
+            </a>
+
+            <a class="btn btn-outline-light" href="{{ url_for('student_track') }}">
+                Track a Request
+            </a>
+        </div>
+
+        <div class="hero-note">
+            A digital process for students, the Dean's Office and Campus Security.
+        </div>
+    </div>
+
+    <!-- Summarizes the four stages of hostel clearance. -->
+    <div class="hero-panel" aria-label="Clearance process">
+        <div class="panel-label">CLEARANCE PROCESS</div>
+
+        <div class="process-step">
+            <span aria-hidden="true">01</span>
+            <div>
+                <strong>Submit request</strong>
+                <small>Provide your departure details</small>
+            </div>
+        </div>
+
+        <div class="process-step">
+            <span aria-hidden="true">02</span>
+            <div>
+                <strong>Dean's Office review</strong>
+                <small>Request and key clearance verification</small>
+            </div>
+        </div>
+
+        <div class="process-step">
+            <span aria-hidden="true">03</span>
+            <div>
+                <strong>Digital gate pass</strong>
+                <small>Receive a secure QR-coded pass</small>
+            </div>
+        </div>
+
+        <div class="process-step">
+            <span aria-hidden="true">04</span>
+            <div>
+                <strong>Security verification</strong>
+                <small>Verify the pass and record departure</small>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<!-- Student-facing services and navigation. -->
+<section class="section" aria-labelledby="services-heading">
+
+    <div class="section-heading">
+        <span class="eyebrow">STUDENT SERVICES</span>
+
+        <h2 id="services-heading">Manage your checkout</h2>
+
+        <p>
+            Access the services you need to complete your hostel departure.
+        </p>
+    </div>
+
+    <div class="feature-grid">
+
+        <a class="feature-card" href="{{ url_for('student_submit') }}">
+            <span class="feature-number">01</span>
+
+            <h3>Submit Checkout Request</h3>
+
+            <p>
+                Register your intended departure and hostel details.
+            </p>
+
+            <span class="text-link">Submit request →</span>
+        </a>
+
+        <a class="feature-card" href="{{ url_for('student_track') }}">
+            <span class="feature-number">02</span>
+
+            <h3>Track Your Clearance</h3>
+
+            <p>
+                Use your private reference to check the progress
+                of your request.
+            </p>
+
+            <span class="text-link">Track request →</span>
+        </a>
+
+        <a class="feature-card" href="{{ url_for('login') }}">
+            <span class="feature-number">03</span>
+
+            <h3>Staff Portal</h3>
+
+            <p>
+                Secure access for authorized university staff.
+            </p>
+
+            <span class="text-link">Staff sign in →</span>
+        </a>
+
+    </div>
+</section>
+
+<!-- Reminds students of the approval and verification requirements. -->
+<section class="notice" aria-label="Important checkout information">
+    <strong>Important:</strong>
+    A gate pass is issued only after the required key clearance and approval
+    by the Dean's Office. Security must verify the pass before departure.
+</section>
+
+{% endblock %}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#173b56">
+
+    <title>{% block title %}UEAB Smart Hostel Checkout{% endblock %}</title>
+
+    <!-- Loads the shared application stylesheet. -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.css') }}"
+    >
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <!-- Application identity and home navigation. -->
+    <a class="brand" href="{{ url_for('index') }}">
+        <img
+            class="ueab-header-logo"
+            src="{{ url_for('static', filename='images/ueab-seal.png') }}"
+            alt="University of Eastern Africa, Baraton seal"
+        >
+
+        <span>
+            <strong>SMART HOSTEL CHECKOUT</strong>
+            <small>Digital Clearance System</small>
+        </span>
+    </a>
+
+    <!-- Main navigation and role-specific staff links. -->
+    <nav aria-label="Main navigation">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('student_submit') }}">Student Checkout</a>
+        <a href="{{ url_for('student_track') }}">Track Request</a>
+
+        {% if session.get('staff_id') %}
+
+            {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('admin_dashboard') }}">
+                    Administration
+                </a>
+
+            {% elif session.get('role') == 'dean' %}
+                <a href="{{ url_for('dean_dashboard') }}">
+                    Dean's Office
+                </a>
+
+            {% elif session.get('role') == 'security' %}
+                <a href="{{ url_for('security_dashboard') }}">
+                    Security
+                </a>
+            {% endif %}
+
+            <!-- Logout uses POST and includes CSRF protection. -->
+            <form
+                class="nav-form"
+                method="POST"
+                action="{{ url_for('logout') }}"
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <button class="nav-logout" type="submit">
+                    Sign out
+                </button>
+            </form>
+
+        {% else %}
+            <a class="nav-login" href="{{ url_for('login') }}">
+                Staff Login
+            </a>
+        {% endif %}
+    </nav>
+
+</header>
+
+<main class="page" id="main-content">
+
+    <!-- Displays server-generated feedback messages. -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container" role="status" aria-live="polite">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Individual pages insert their content here. -->
+    {% block content %}{% endblock %}
+
+</main>
+
+<!-- Shared application footer. -->
+<footer>
+    <div>
+        <strong>UEAB Smart Hostel Checkout System</strong><br>
+        University of Eastern Africa, Baraton
+    </div>
+
+    <div class="footer-right">
+        Digital clearance and departure management<br>
+
+        ©
+        <a
+            href="https://kimanthi-labs.ai.studio"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            @kimanthi-labs
+        </a>
+    </div>
+</footer>
+
+<!-- Loads shared application JavaScript after the page content. -->
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+
+<!-- Allows individual pages to load additional scripts. -->
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Review Checkout Request{% endblock %}
+
+{% block content %}
+
+<!-- Display the student details and current request status. -->
+<div class="dashboard-heading">
+    <div>
+        <a class="back-link" href="{{ url_for('dean_dashboard') }}">
+            &larr; Back to requests
+        </a>
+
+        <span class="eyebrow">REQUEST REVIEW</span>
+
+        <h1>{{ record.student_name }}</h1>
+
+        <p>
+            {{ record.registration_number }} ·
+            {{ record.hostel }} ·
+            Room {{ record.room_number }}
+        </p>
+    </div>
+
+    <span class="tag {{ 'tag-green' if record.status == 'approved' else 'tag-amber' }}">
+        {{ record.status|title }}
+    </span>
+</div>
+
+<div class="two-column">
+
+    <!-- Student particulars and departure information. -->
+    <section class="form-card">
+        <h2>Student and departure information</h2>
+
+        <div class="detail-list">
+            <div>
+                <span>Phone</span>
+                <strong>{{ record.phone }}</strong>
+            </div>
+
+            <div>
+                <span>Hostel</span>
+                <strong>{{ record.hostel }}</strong>
+            </div>
+
+            <div>
+                <span>Room</span>
+                <strong>{{ record.room_number }}</strong>
+            </div>
+
+            <div>
+                <span>Destination</span>
+                <strong>{{ record.destination }}</strong>
+            </div>
+
+            <div>
+                <span>Departure date</span>
+                <strong>{{ record.departure_date }}</strong>
+            </div>
+
+            <div>
+                <span>Additional information</span>
+                <strong>{{ record.reason or 'None provided' }}</strong>
+            </div>
+
+            <div>
+                <span>Submitted</span>
+                <strong>{{ record.created_at }}</strong>
+            </div>
+        </div>
+
+        <!-- Only approved requests can access their issued gate pass. -->
+        {% if record.status == 'approved' %}
+            <a
+                class="btn btn-primary full-button"
+                href="{{ url_for('gate_pass', request_id=record.id) }}"
+            >
+                View Digital Gate Pass
+            </a>
+        {% endif %}
+    </section>
+
+    <!-- Record key disposition and any associated payment arrangements. -->
+    <section class="form-card">
+        <h2>Key clearance record</h2>
+
+        <div class="current-status">
+            Current key status:
+            <strong>
+                {{ record.key_status|replace('_', ' ')|title }}
+            </strong>
+        </div>
+
+        <form method="POST" class="stack-form">
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+            >
+
+            <input type="hidden" name="action" value="key">
+
+            <label for="key_status">Key disposition</label>
+            <select id="key_status" name="key_status" required>
+                <option value="" disabled
+                    {% if not record.key_status or record.key_status == 'pending' %}selected{% endif %}>
+                    Select disposition
+                </option>
+
+                <option value="returned"
+                    {% if record.key_status == 'returned' %}selected{% endif %}>
+                    Key physically returned
+                </option>
+
+                <option value="lost_paid"
+                    {% if record.key_status == 'lost_paid' %}selected{% endif %}>
+                    Key lost — payment completed
+                </option>
+
+                <option value="lost_agreed"
+                    {% if record.key_status == 'lost_agreed' %}selected{% endif %}>
+                    Key lost — payment agreement made
+                </option>
+
+                <option value="lost_unpaid"
+                    {% if record.key_status == 'lost_unpaid' %}selected{% endif %}>
+                    Key lost — payment pending, no agreement
+                </option>
+
+                <option value="exception"
+                    {% if record.key_status == 'exception' %}selected{% endif %}>
+                    Authorized exception
+                </option>
+            </select>
+
+            <label for="payment_status">Payment status</label>
+            <select id="payment_status" name="payment_status">
+                <option value=""
+                    {% if not record.payment_status %}selected{% endif %}>
+                    Not applicable
+                </option>
+
+                <option value="paid"
+                    {% if record.payment_status == 'paid' %}selected{% endif %}>
+                    Paid
+                </option>
+
+                <option value="agreed"
+                    {% if record.payment_status == 'agreed' %}selected{% endif %}>
+                    Agreed / scheduled
+                </option>
+
+                <option value="pending"
+                    {% if record.payment_status == 'pending' %}selected{% endif %}>
+                    Pending
+                </option>
+            </select>
+
+            <label for="payment_reference">Payment reference</label>
+            <input
+                id="payment_reference"
+                name="payment_reference"
+                type="text"
+                maxlength="100"
+                value="{{ record.payment_reference or '' }}"
+                placeholder="Receipt or transaction reference"
+            >
+
+            <label for="payment_due_date">Agreed payment due date</label>
+            <input
+                id="payment_due_date"
+                type="date"
+                name="payment_due_date"
+                value="{{ record.payment_due_date or '' }}"
+            >
+
+            <label for="key_remarks">Key remarks</label>
+            <textarea
+                id="key_remarks"
+                name="key_remarks"
+                rows="2"
+                maxlength="1000"
+                placeholder="Record key handover or payment details"
+            >{{ record.key_remarks or '' }}</textarea>
+
+            <label for="exception_reason">Exception justification</label>
+            <textarea
+                id="exception_reason"
+                name="exception_reason"
+                rows="2"
+                maxlength="1000"
+                placeholder="Required when selecting authorized exception"
+            >{{ record.exception_reason or '' }}</textarea>
+
+            <button
+                class="btn btn-secondary full-button"
+                type="submit"
+            >
+                Save Key Clearance
+            </button>
+        </form>
+
+        <div class="divider"></div>
+
+        <!-- Submit the separate approval action after clearance review. -->
+        <h2>Approve checkout</h2>
+
+        <p class="muted small">
+            Approval is permitted only when key return, payment settlement,
+            a documented payment agreement, or an authorized exception
+            has been recorded.
+        </p>
+
+        <form
+            method="POST"
+            onsubmit="return confirm('Approve this checkout and issue a gate pass?')"
+        >
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+            >
+
+            <input type="hidden" name="action" value="approve">
+
+            <button
+                class="btn btn-gold full-button"
+                type="submit"
+                {% if record.status == 'approved' %}disabled{% endif %}
+            >
+                Approve and Issue Gate Pass
+            </button>
+        </form>
+    </section>
+
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Security Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Display the security portal heading and authenticated officer. -->
+<div class="dashboard-heading">
+    <div>
+        <span class="eyebrow">CAMPUS DEPARTURE CONTROL</span>
+        <h1>Security Portal</h1>
+        <p>
+            Verify digital gate passes and record student departures.
+        </p>
+    </div>
+
+    <span class="user-chip">
+        {{ session.get('full_name') }}
+    </span>
+</div>
+
+<!-- Provide direct access to the gate-pass verification facility. -->
+<div class="security-action">
+    <div>
+        <h2>Verify a gate pass</h2>
+        <p>
+            Scan the QR code or enter the pass token to validate
+            a student's clearance.
+        </p>
+    </div>
+
+    <a
+        class="btn btn-primary"
+        href="{{ url_for('security_verify') }}"
+    >
+        Open Verification
+    </a>
+</div>
+
+<!-- Display issued gate passes and their departure status. -->
+<div class="table-card">
+    <div class="table-heading">
+        <h2>Issued gate passes</h2>
+        <span>{{ passes|length }} records</span>
+    </div>
+
+    {% if passes %}
+        <div class="table-scroll">
+            <table>
+                <caption class="sr-only">
+                    Issued student gate passes and their departure records.
+                </caption>
+
+                <thead>
+                    <tr>
+                        <th scope="col">Student</th>
+                        <th scope="col">Registration</th>
+                        <th scope="col">Hostel / Room</th>
+                        <th scope="col">Departure date</th>
+                        <th scope="col">Pass status</th>
+                        <th scope="col">Verification</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for pass in passes %}
+                        <tr>
+                            <td>
+                                <strong>{{ pass.student_name }}</strong>
+                            </td>
+
+                            <td>{{ pass.registration_number }}</td>
+
+                            <td>
+                                {{ pass.hostel }}
+                                <small>Room {{ pass.room_number }}</small>
+                            </td>
+
+                            <td>{{ pass.departure_date }}</td>
+
+                            <td>
+                                <span class="tag {{ 'tag-green' if pass.used_at else 'tag-amber' }}">
+                                    {{ 'Departure recorded' if pass.used_at else 'Unused' }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <a
+                                    class="table-link"
+                                    href="{{ url_for('security_verify', token=pass.token) }}"
+                                    aria-label="Verify gate pass for {{ pass.student_name }}"
+                                >
+                                    Verify
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            No gate passes have been issued yet.
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
