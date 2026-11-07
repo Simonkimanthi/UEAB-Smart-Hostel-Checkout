@@ -1,7 +1,9 @@
 
 import re
+import os
 import secrets
 import sqlite3
+import tempfile
 import threading
 import time
 from collections import defaultdict, deque
@@ -278,6 +280,109 @@ def clearance_eligible(record):
 
 
 # ---------------------------------------------------------
+
+# ---------------------------------------------------------
+# Temporary protected database import for initial deployment
+# ---------------------------------------------------------
+
+@app.route("/admin/database-import", methods=["PUT"])
+def import_local_database():
+    """Import the existing local SQLite database into the deployment."""
+
+    expected_token = os.environ.get("ADMIN_SETUP_TOKEN", "")
+    supplied_token = request.headers.get("X-Admin-Setup-Token", "")
+
+    if not expected_token or not secrets.compare_digest(
+        supplied_token, expected_token
+    ):
+        abort(403)
+
+    if request.content_length and request.content_length > 10 * 1024 * 1024:
+        abort(413)
+
+    uploaded = request.files.get("database")
+
+    if not uploaded:
+        abort(400, "Database file is required.")
+
+    if app.config["DATABASE"] == ":memory:":
+        abort(400, "Database import is unavailable.")
+
+    database_path = os.path.abspath(app.config["DATABASE"])
+    database_directory = os.path.dirname(database_path)
+    os.makedirs(database_directory, exist_ok=True)
+
+    temporary_path = None
+
+    try:
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            dir=database_directory,
+            suffix=".sqlite3"
+        ) as temporary_file:
+            temporary_path = temporary_file.name
+            uploaded.save(temporary_file)
+
+        incoming = sqlite3.connect(temporary_path)
+
+        try:
+            if incoming.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                abort(400, "Database integrity check failed.")
+
+            tables = {
+                row[0] for row in incoming.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
+            }
+
+            required = {
+                "staff",
+                "checkout_requests",
+                "gate_passes",
+                "audit_logs",
+            }
+
+            if not required.issubset(tables):
+                abort(400, "Database schema is incomplete.")
+
+            active_admins = incoming.execute(
+                """
+                SELECT COUNT(*) FROM staff
+                WHERE role = 'admin' AND active = 1
+                """
+            ).fetchone()[0]
+
+            if active_admins < 1:
+                abort(400, "No active administrator found.")
+
+        finally:
+            incoming.close()
+
+        if os.path.exists(database_path):
+            existing = sqlite3.connect(database_path)
+
+            try:
+                current_admins = existing.execute(
+                    """
+                    SELECT COUNT(*) FROM staff
+                    WHERE role = 'admin' AND active = 1
+                    """
+                ).fetchone()[0]
+            finally:
+                existing.close()
+
+            if current_admins:
+                abort(409, "A live administrator already exists.")
+
+        os.replace(temporary_path, database_path)
+        temporary_path = None
+
+        return "Database imported successfully.", 200
+
+    finally:
+        if temporary_path and os.path.exists(temporary_path):
+            os.remove(temporary_path)
+
 # Public home page
 # ---------------------------------------------------------
 
