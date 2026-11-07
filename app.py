@@ -980,11 +980,9 @@ def gate_pass(request_id):
     if record is None:
         abort(404)
 
-    verify_url = url_for(
-        "public_gate_pass",
-        token=record["token"],
-        _external=True,
-    )
+    verify_path = url_for("public_gate_pass", token=record["token"])
+
+    verify_url = os.environ.get("PUBLIC_BASE_URL", request.url_root).rstrip("/") + verify_path
 
     qr = qrcode.make(verify_url)
 
@@ -1033,11 +1031,9 @@ def public_gate_pass(token):
     if record is None:
         abort(404)
 
-    verify_url = url_for(
-        "public_gate_pass",
-        token=token,
-        _external=True,
-    )
+    verify_path = url_for("public_gate_pass", token=token)
+
+    verify_url = os.environ.get("PUBLIC_BASE_URL", request.url_root).rstrip("/") + verify_path
 
     qr = qrcode.make(verify_url)
 
