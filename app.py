@@ -282,106 +282,94 @@ def clearance_eligible(record):
 # ---------------------------------------------------------
 
 # ---------------------------------------------------------
-# Temporary protected database import for initial deployment
+
+# ---------------------------------------------------------
+# First administrator setup
 # ---------------------------------------------------------
 
-@app.route("/admin/database-import", methods=["PUT"])
-def import_local_database():
-    """Import the existing local SQLite database into the deployment."""
+@app.route("/setup-admin", methods=["GET", "PUT"])
+def setup_admin():
+    """Allow secure creation of the first administrator only."""
+
+    if request.method == "GET":
+        db = get_db()
+        existing = db.execute(
+            "SELECT COUNT(*) FROM staff WHERE role = 'admin' AND active = 1"
+        ).fetchone()[0]
+
+        if existing:
+            return "Administrator setup is already complete.", 403
+
+        return render_template("setup_admin.html")
 
     expected_token = os.environ.get("ADMIN_SETUP_TOKEN", "")
-    supplied_token = request.headers.get("X-Admin-Setup-Token", "")
+    data = request.get_json(silent=True) or {}
+
+    supplied_token = str(data.get("setup_token", ""))
 
     if not expected_token or not secrets.compare_digest(
         supplied_token, expected_token
     ):
-        abort(403)
+        return "Invalid setup token.", 403
 
-    if request.content_length and request.content_length > 10 * 1024 * 1024:
-        abort(413)
+    full_name = str(data.get("full_name", "")).strip()
+    username = str(data.get("username", "")).strip().lower()
+    password = str(data.get("password", ""))
 
-    uploaded = request.files.get("database")
+    if not full_name or len(full_name) > 120:
+        return "Enter a valid full name.", 400
 
-    if not uploaded:
-        abort(400, "Database file is required.")
+    if not re.fullmatch(r"[a-z0-9_.-]{3,40}", username):
+        return "Username must be 3-40 characters using letters, numbers, dots, underscores or hyphens.", 400
 
-    if app.config["DATABASE"] == ":memory:":
-        abort(400, "Database import is unavailable.")
+    if len(password) < 12:
+        return "Password must contain at least 12 characters.", 400
 
-    database_path = os.path.abspath(app.config["DATABASE"])
-    database_directory = os.path.dirname(database_path)
-    os.makedirs(database_directory, exist_ok=True)
-
-    temporary_path = None
+    db = get_db()
 
     try:
-        with tempfile.NamedTemporaryFile(
-            delete=False,
-            dir=database_directory,
-            suffix=".sqlite3"
-        ) as temporary_file:
-            temporary_path = temporary_file.name
-            uploaded.save(temporary_file)
+        db.execute("BEGIN IMMEDIATE")
 
-        incoming = sqlite3.connect(temporary_path)
+        existing = db.execute(
+            "SELECT COUNT(*) FROM staff WHERE role = 'admin' AND active = 1"
+        ).fetchone()[0]
 
-        try:
-            if incoming.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
-                abort(400, "Database integrity check failed.")
+        if existing:
+            db.rollback()
+            return "Administrator setup is already complete.", 403
 
-            tables = {
-                row[0] for row in incoming.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
-            }
+        db.execute(
+            """
+            INSERT INTO staff (
+                full_name,
+                username,
+                password_hash,
+                role,
+                active
+            )
+            VALUES (?, ?, ?, 'admin', 1)
+            """,
+            (
+                full_name,
+                username,
+                generate_password_hash(password),
+            ),
+        )
 
-            required = {
-                "staff",
-                "checkout_requests",
-                "gate_passes",
-                "audit_logs",
-            }
+        db.commit()
+        return "Administrator created successfully. You can now log in.", 200
 
-            if not required.issubset(tables):
-                abort(400, "Database schema is incomplete.")
+    except sqlite3.IntegrityError:
+        db.rollback()
+        return "That username is already in use.", 409
 
-            active_admins = incoming.execute(
-                """
-                SELECT COUNT(*) FROM staff
-                WHERE role = 'admin' AND active = 1
-                """
-            ).fetchone()[0]
+    except Exception:
+        db.rollback()
+        app.logger.exception("Administrator setup failed.")
+        return "Administrator setup failed. Check the application logs.", 500
 
-            if active_admins < 1:
-                abort(400, "No active administrator found.")
 
-        finally:
-            incoming.close()
-
-        if os.path.exists(database_path):
-            existing = sqlite3.connect(database_path)
-
-            try:
-                current_admins = existing.execute(
-                    """
-                    SELECT COUNT(*) FROM staff
-                    WHERE role = 'admin' AND active = 1
-                    """
-                ).fetchone()[0]
-            finally:
-                existing.close()
-
-            if current_admins:
-                abort(409, "A live administrator already exists.")
-
-        os.replace(temporary_path, database_path)
-        temporary_path = None
-
-        return "Database imported successfully.", 200
-
-    finally:
-        if temporary_path and os.path.exists(temporary_path):
-            os.remove(temporary_path)
+# ---------------------------------------------------------
 
 # Public home page
 # ---------------------------------------------------------

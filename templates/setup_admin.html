@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>Administrator Setup | UEAB Smart Hostel Checkout</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: #f2f5f8;
+            color: #1d2935;
+            font-family: Arial, sans-serif;
+        }
+        .panel {
+            width: 100%;
+            max-width: 440px;
+            padding: 32px;
+            background: #fff;
+            border: 1px solid #dce3e9;
+            border-radius: 12px;
+            box-shadow: 0 12px 35px rgba(20, 40, 60, .08);
+        }
+        h1 { margin: 0 0 8px; font-size: 25px; }
+        p { color: #617080; line-height: 1.5; }
+        label {
+            display: block;
+            margin: 17px 0 7px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5df;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+        button {
+            width: 100%;
+            margin-top: 23px;
+            padding: 13px;
+            border: 0;
+            border-radius: 7px;
+            background: #173b56;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:disabled { opacity: .6; cursor: wait; }
+        #message { margin-top: 18px; overflow-wrap: anywhere; }
+        a { color: #173b56; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <main class="panel">
+        <h1>Create Administrator</h1>
+        <p>Set up the first administrator account for UEAB Smart Hostel Checkout.</p>
+
+        <form id="setupForm">
+            <label for="full_name">Full name</label>
+            <input id="full_name" name="full_name" maxlength="120" required>
+
+            <label for="username">Username</label>
+            <input id="username" name="username" minlength="3" maxlength="40"
+                   autocomplete="username" required>
+
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password"
+                   minlength="12" autocomplete="new-password" required>
+
+            <label for="setup_token">Administrator setup token</label>
+            <input id="setup_token" name="setup_token" type="password"
+                   autocomplete="off" required>
+
+            <button id="submitButton" type="submit">Create Administrator</button>
+        </form>
+
+        <p id="message" role="status" aria-live="polite"></p>
+        <p id="loginLink" hidden><a href="/login">Continue to login</a></p>
+    </main>
+
+    <script>
+        const form = document.getElementById("setupForm");
+        const button = document.getElementById("submitButton");
+        const message = document.getElementById("message");
+        const loginLink = document.getElementById("loginLink");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+            button.disabled = true;
+            message.textContent = "Creating administrator...";
+
+            const data = Object.fromEntries(new FormData(form).entries());
+
+            try {
+                const response = await fetch("/setup-admin", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.text();
+                message.textContent = result;
+
+                if (response.ok) {
+                    form.hidden = true;
+                    loginLink.hidden = false;
+                } else {
+                    button.disabled = false;
+                }
+            } catch (error) {
+                message.textContent = "Request failed. Please try again.";
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
