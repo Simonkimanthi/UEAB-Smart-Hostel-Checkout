@@ -158,7 +158,7 @@
             <!-- Only an unused, approved and unrevoked pass can be submitted. -->
             <form
                 method="POST"
-                action="{{ url_for('request_departure_record', token=record.token) }}"
+                action="{{ url_for('record_departure', pass_id=record.id) }}"
             >
                 <input
                     type="hidden"
