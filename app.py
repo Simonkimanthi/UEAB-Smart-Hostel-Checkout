@@ -69,23 +69,40 @@ def protect_forms():
             or not expected
             or not secrets.compare_digest(submitted, expected)
         ):
-            abort(400, "Invalid or expired form security token.")
+            abort(
+                400,
+                "This form's security token is missing or no longer matches "
+                "your session. Reload the page and submit again. If your "
+                "staff session has expired, sign in again.",
+            )
 
 
 @app.after_request
 def prevent_sensitive_page_caching(response):
-    """Prevent browsers and intermediary caches from storing sensitive pages."""
-    if request.endpoint in {
-        "student_track",
-        "login",
-        "gate_pass",
-        "public_gate_pass",
-        "security_verify",
-    }:
+    """Prevent cached application pages from showing stale or private data."""
+    if request.endpoint != "static":
         response.headers["Cache-Control"] = "no-store, private"
         response.headers["Pragma"] = "no-cache"
 
     return response
+
+
+@app.errorhandler(400)
+def handle_bad_request(error):
+    """Show the reason a request was rejected without weakening validation."""
+    return render_template(
+        "errors/400.html",
+        error_description=error.description,
+    ), 400
+
+
+@app.errorhandler(403)
+def handle_forbidden(error):
+    """Show the reason access to a protected resource was denied."""
+    return render_template(
+        "errors/403.html",
+        error_description=error.description,
+    ), 403
 
 
 # ---------------------------------------------------------
@@ -214,7 +231,10 @@ def login_required(*roles):
             session["role"] = staff["role"]
 
             if roles and staff["role"] not in roles:
-                abort(403)
+                abort(
+                    403,
+                    "Your account does not have permission to access this page.",
+                )
 
             return function(*args, **kwargs)
 
@@ -603,6 +623,7 @@ def login():
             session["username"] = staff["username"]
             session["role"] = staff["role"]
 
+            session.permanent = True
             csrf_token()
 
             audit("staff_login", staff["username"])
@@ -1811,4 +1832,3 @@ def admin_activity():
 
 if __name__ == "__main__":
     app.run()
-
