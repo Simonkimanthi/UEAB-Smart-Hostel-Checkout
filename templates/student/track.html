@@ -134,14 +134,31 @@
             </div>
         </div>
 
-        <!-- Provides a message appropriate to the current request status. -->
-        {% if record.status == 'approved' %}
+        <!-- Displays a gate pass only when a valid pass is available. -->
+        {% if record.status == 'approved' and record.gate_pass_token %}
+            <div class="student-status-message status-approved">
+                <strong>Your gate pass is ready</strong>
+                <p>
+                    Your checkout request has been approved and your gate pass
+                    has been issued. Open it to view, print, or save a PDF copy.
+                </p>
+
+                <a
+                    class="btn btn-primary full-button"
+                    href="{{ url_for('public_gate_pass', token=record.gate_pass_token) }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    View and download gate pass
+                </a>
+            </div>
+
+        {% elif record.status == 'approved' %}
             <div class="student-status-message status-approved">
                 <strong>Request approved</strong>
                 <p>
-                    Your request has been approved by the Dean's Office.
-                    Confirm your key clearance and obtain your official
-                    gate pass before proceeding to Security.
+                    Your request has been approved. Your gate pass has not
+                    yet been issued. Please check again later.
                 </p>
             </div>
 

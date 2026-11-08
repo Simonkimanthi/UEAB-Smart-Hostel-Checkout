@@ -2,7 +2,7 @@
 import re
 import os
 import secrets
-import sqlite3
+import psycopg
 import tempfile
 import threading
 import time
@@ -359,7 +359,7 @@ def setup_admin():
         db.commit()
         return "Administrator created successfully. You can now log in.", 200
 
-    except sqlite3.IntegrityError:
+    except psycopg.IntegrityError:
         db.rollback()
         return "That username is already in use.", 409
 
@@ -489,7 +489,7 @@ def student_submit():
 
             db.commit()
 
-        except sqlite3.Error:
+        except psycopg.Error:
             db.rollback()
             app.logger.exception("Checkout request submission failed.")
 
@@ -514,6 +514,8 @@ def student_submit():
 
 @app.route("/student/track", methods=["GET", "POST"])
 def student_track():
+    """Allow students to track requests and access issued gate passes."""
+
     record = None
 
     if request.method == "POST":
@@ -527,20 +529,25 @@ def student_track():
             flash("Please enter a valid tracking reference.", "error")
             return render_template("student/track.html", record=None)
 
-        # Retrieve only the information required by the student tracking page.
+        # Retrieve the request and any active gate pass issued for it.
         record = get_db().execute(
             """
             SELECT
-                reference,
-                student_name,
-                registration_number,
-                hostel,
-                room_number,
-                departure_date,
-                status,
-                key_status
-            FROM checkout_requests
-            WHERE reference = ?
+                r.reference,
+                r.student_name,
+                r.registration_number,
+                r.hostel,
+                r.room_number,
+                r.departure_date,
+                r.status,
+                r.key_status,
+                p.token AS gate_pass_token
+            FROM checkout_requests r
+            LEFT JOIN gate_passes p
+                ON p.request_id = r.id
+                AND p.revoked = 0
+                AND r.status = 'approved'
+            WHERE r.reference = ?
             """,
             (reference,),
         ).fetchone()
@@ -552,8 +559,6 @@ def student_track():
             )
 
     return render_template("student/track.html", record=record)
-
-
 # ---------------------------------------------------------
 # Staff login
 # ---------------------------------------------------------
@@ -819,7 +824,7 @@ def request_detail(request_id):
 
                 db.commit()
 
-            except sqlite3.Error:
+            except psycopg.Error:
                 db.rollback()
                 app.logger.exception("Key clearance update failed.")
 
@@ -922,7 +927,7 @@ def request_detail(request_id):
 
                 db.commit()
 
-            except sqlite3.Error:
+            except psycopg.Error:
                 db.rollback()
                 app.logger.exception("Checkout approval failed.")
 
@@ -1179,7 +1184,7 @@ def record_departure(pass_id):
 
         db.rollback()
 
-    except sqlite3.Error:
+    except psycopg.Error:
         db.rollback()
         app.logger.exception("Departure recording failed.")
 
@@ -1315,7 +1320,7 @@ def create_staff():
 
         db.commit()
 
-    except sqlite3.Error:
+    except psycopg.Error:
         db.rollback()
         app.logger.exception("Staff account creation failed.")
 
@@ -1420,7 +1425,7 @@ def update_staff(staff_id):
 
         db.commit()
 
-    except sqlite3.Error:
+    except psycopg.Error:
         db.rollback()
         app.logger.exception("Staff account update failed.")
 
@@ -1502,7 +1507,7 @@ def reset_staff_password(staff_id):
 
         db.commit()
 
-    except sqlite3.Error:
+    except psycopg.Error:
         db.rollback()
         app.logger.exception("Staff password reset failed.")
 
@@ -1604,7 +1609,7 @@ def toggle_staff(staff_id):
 
         db.commit()
 
-    except sqlite3.Error:
+    except psycopg.Error:
         db.rollback()
         app.logger.exception("Staff account status update failed.")
 
