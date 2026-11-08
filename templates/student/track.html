@@ -9,8 +9,7 @@
         <span class="eyebrow">STUDENT PORTAL</span>
         <h1>Track your checkout request</h1>
         <p>
-            Enter the private tracking reference you received after
-            submitting your request.
+            Enter your checkout tracking reference or university registration number.
         </p>
     </div>
 
@@ -18,7 +17,7 @@
     <form class="form-card student-track-form" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <label for="tracking-reference">Private tracking reference</label>
+        <label for="tracking-reference">Tracking reference or registration number</label>
         <input
             id="tracking-reference"
             name="reference"
@@ -27,7 +26,7 @@
             maxlength="100"
             autocomplete="off"
             spellcheck="false"
-            placeholder="Enter your tracking reference"
+            placeholder="Enter reference or registration number"
         >
 
         <button class="btn btn-primary full-button" type="submit">
@@ -35,7 +34,7 @@
         </button>
 
         <p class="form-footnote">
-            Your reference is private. Keep it safe and do not share it publicly.
+            You can use either your checkout tracking reference or university registration number.
         </p>
     </form>
 

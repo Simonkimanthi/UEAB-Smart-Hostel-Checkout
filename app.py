@@ -514,7 +514,7 @@ def student_submit():
 
 @app.route("/student/track", methods=["GET", "POST"])
 def student_track():
-    """Allow students to track requests and access issued gate passes."""
+    """Allow students to track requests using a reference or registration number."""
 
     record = None
 
@@ -523,13 +523,13 @@ def student_track():
         if not check_rate_limit("tracking", client_identity()):
             abort(429, "Too many tracking attempts. Please try again later.")
 
-        reference = request.form.get("reference", "").strip().upper()
+        identifier = request.form.get("reference", "").strip()
 
-        if not reference or len(reference) > 100:
-            flash("Please enter a valid tracking reference.", "error")
+        if not identifier or len(identifier) > 100:
+            flash("Please enter a valid tracking reference or registration number.", "error")
             return render_template("student/track.html", record=None)
 
-        # Retrieve the request and any active gate pass issued for it.
+        # Search by the original reference or the university registration number.
         record = get_db().execute(
             """
             SELECT
@@ -547,19 +547,21 @@ def student_track():
                 ON p.request_id = r.id
                 AND p.revoked = 0
                 AND r.status = 'approved'
-            WHERE r.reference = ?
+            WHERE UPPER(r.reference) = ?
+                OR LOWER(r.registration_number) = LOWER(?)
+            ORDER BY r.id DESC
+            LIMIT 1
             """,
-            (reference,),
+            (identifier.upper(), identifier),
         ).fetchone()
 
         if record is None:
             flash(
-                "No request was found with that tracking reference.",
+                "No request was found with that reference or registration number.",
                 "error",
             )
 
     return render_template("student/track.html", record=record)
-# ---------------------------------------------------------
 # Staff login
 # ---------------------------------------------------------
 
@@ -1809,3 +1811,4 @@ def admin_activity():
 
 if __name__ == "__main__":
     app.run()
+
