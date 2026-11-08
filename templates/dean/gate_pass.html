@@ -153,7 +153,7 @@
     <!-- Display actions according to the pass state and viewing context. -->
     <div class="pass-actions">
 
-        {% if public_view and not record.revoked and not record.used_at and record.status == 'approved' %}
+        {% if public_view and session.get('role') in ('security', 'admin') and not record.revoked and not record.used_at and record.status == 'approved' %}
 
             <!-- Only an unused, approved and unrevoked pass can be submitted. -->
             <form
@@ -206,3 +206,4 @@
     </div>
 </div>
 {% endblock %}
+
