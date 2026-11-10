@@ -21,6 +21,7 @@ class SessionWorkflowTests(unittest.TestCase):
         for staff_id, username, role in (
             (1, "dean_user", "dean"),
             (2, "security_user", "security"),
+            (3, "admin_user", "admin"),
         ):
             self.db.execute(
                 """
@@ -55,6 +56,7 @@ class SessionWorkflowTests(unittest.TestCase):
 
         self.dean = app_module.app.test_client()
         self.security = app_module.app.test_client()
+        self.admin = app_module.app.test_client()
 
     def tearDown(self):
         self.get_db_patcher.stop()
@@ -71,7 +73,8 @@ class SessionWorkflowTests(unittest.TestCase):
                 username TEXT NOT NULL UNIQUE,
                 password_hash TEXT NOT NULL,
                 role TEXT NOT NULL,
-                active INTEGER NOT NULL
+                active INTEGER NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE checkout_requests (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,6 +115,23 @@ class SessionWorkflowTests(unittest.TestCase):
                 action TEXT NOT NULL,
                 details TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE staff_permissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                staff_id INTEGER NOT NULL,
+                permission TEXT NOT NULL,
+                allowed BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE CASCADE,
+                UNIQUE (staff_id, permission)
+            );
+            CREATE TABLE staff_hostel_access (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                staff_id INTEGER NOT NULL,
+                hostel TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE CASCADE,
+                UNIQUE (staff_id, hostel)
             );
             """
         )
@@ -174,7 +194,55 @@ class SessionWorkflowTests(unittest.TestCase):
         self.assertIn("Test Student", tracked.get_data(as_text=True))
         return record
 
+    def _grant_permission(self, staff_id, permission):
+        self.db.execute(
+            """
+            INSERT INTO staff_permissions (staff_id, permission, allowed)
+            VALUES (?, ?, TRUE)
+            ON CONFLICT (staff_id, permission) DO UPDATE SET allowed = TRUE
+            """,
+            (staff_id, permission),
+        )
+        self.db.commit()
+
+    def _assign_hostel(self, staff_id, hostel):
+        self.db.execute(
+            """
+            INSERT INTO staff_hostel_access (staff_id, hostel)
+            VALUES (?, ?)
+            ON CONFLICT (staff_id, hostel) DO NOTHING
+            """,
+            (staff_id, hostel),
+        )
+        self.db.commit()
+
+    def _create_request(self, reference, hostel):
+        cursor = self.db.execute(
+            """
+            INSERT INTO checkout_requests (
+                reference, student_name, registration_number, phone,
+                hostel, room_number, destination, departure_date
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                reference,
+                f"Student {reference}",
+                f"UEAB/{reference}/26",
+                "07000000000",
+                hostel,
+                "A-1",
+                "Nairobi",
+                "2026-12-01",
+            ),
+        )
+        self.db.commit()
+        return cursor.lastrowid
+
     def test_staff_session_survives_refresh_and_dashboard_is_fresh(self):
+        self._grant_permission(1, "requests.view")
+        self._assign_hostel(1, "New Men's Hostel")
+        self._assign_hostel(1, "Box Hostel")
         login_page = self.dean.get("/login")
         old_token = self._csrf_token(login_page)
         response = self.dean.post(
@@ -225,6 +293,22 @@ class SessionWorkflowTests(unittest.TestCase):
         )
 
     def test_student_to_dean_approval_and_security_departure(self):
+        for permission in (
+            "requests.view",
+            "keys.manage",
+            "requests.approve",
+            "passes.view",
+        ):
+            self._grant_permission(1, permission)
+        self._assign_hostel(1, "New Men's Hostel")
+
+        for permission in (
+            "passes.view",
+            "passes.verify",
+            "departures.record",
+        ):
+            self._grant_permission(2, permission)
+
         record = self._submit_student_request()
 
         self._login(self.dean, "dean_user", "/dean")
@@ -289,6 +373,7 @@ class SessionWorkflowTests(unittest.TestCase):
         self.assertIsNotNone(used_pass["used_at"])
 
     def test_wrong_role_shows_specific_forbidden_reason(self):
+        self._grant_permission(2, "passes.view")
         self._login(self.security, "security_user", "/security")
 
         response = self.security.get("/dean")
@@ -298,6 +383,190 @@ class SessionWorkflowTests(unittest.TestCase):
             "Your account does not have permission",
             response.get_data(as_text=True),
         )
+
+    def test_dean_is_scoped_on_dashboard_and_direct_urls(self):
+        self._grant_permission(1, "requests.view")
+        new_mens = self._create_request("mens", "New Men's Hostel")
+        old_mens = self._create_request("old-mens", "Old Men's Hostel")
+        self._grant_permission(1, "passes.view")
+        self.db.execute(
+            "UPDATE checkout_requests SET status = 'approved' WHERE id = ?",
+            (old_mens,),
+        )
+        self.db.execute(
+            "INSERT INTO gate_passes (request_id, token) VALUES (?, ?)",
+            (old_mens, "outside-dean-pass"),
+        )
+        self.db.commit()
+        self._login(self.dean, "dean_user", "/dean")
+
+        dashboard = self.dean.get("/dean")
+        self.assertNotIn("Student mens", dashboard.get_data(as_text=True))
+        self.assertNotIn("Student old-mens", dashboard.get_data(as_text=True))
+        self.assertEqual(self.dean.get(f"/dean/request/{new_mens}").status_code, 403)
+        self.assertEqual(self.dean.get(f"/dean/request/{old_mens}").status_code, 403)
+        self.assertEqual(self.dean.get(f"/dean/gate-pass/{old_mens}").status_code, 403)
+
+        self._assign_hostel(1, "New Men's Hostel")
+        dashboard = self.dean.get("/dean")
+        self.assertIn("Student mens", dashboard.get_data(as_text=True))
+        self.assertNotIn("Student old-mens", dashboard.get_data(as_text=True))
+        self.assertEqual(self.dean.get(f"/dean/request/{old_mens}").status_code, 403)
+        self.assertEqual(self.dean.get(f"/dean/gate-pass/{old_mens}").status_code, 403)
+
+        self.assertEqual(self.dean.get(f"/dean/request/{new_mens}").status_code, 200)
+        detail = self.dean.get(f"/dean/request/{new_mens}")
+        for action in ("key", "approve"):
+            denied_action = self.dean.post(
+                f"/dean/request/{new_mens}",
+                data={
+                    "csrf_token": self._csrf_token(detail),
+                    "action": action,
+                },
+            )
+            self.assertEqual(denied_action.status_code, 403)
+
+        self._assign_hostel(1, "Old Men's Hostel")
+        dashboard = self.dean.get("/dean")
+        self.assertIn("Student mens", dashboard.get_data(as_text=True))
+        self.assertIn("Student old-mens", dashboard.get_data(as_text=True))
+        self.assertEqual(self.dean.get(f"/dean/request/{old_mens}").status_code, 200)
+        self.assertEqual(self.dean.get(f"/dean/gate-pass/{old_mens}").status_code, 200)
+
+    def test_new_dean_has_no_hostel_access_until_assigned(self):
+        self.db.execute(
+            """
+            INSERT INTO staff (
+                id, full_name, username, password_hash, role, active
+            )
+            VALUES (4, 'New Dean', 'new_dean', ?, 'dean', 1)
+            """,
+            (generate_password_hash("test-password-123"),),
+        )
+        request_id = self._create_request("new-dean", "Box Hostel")
+        self._grant_permission(4, "requests.view")
+        self.db.commit()
+
+        client = app_module.app.test_client()
+        self._login(client, "new_dean", "/dean")
+        self.assertNotIn("Student new-dean", client.get("/dean").get_data(as_text=True))
+        self.assertEqual(client.get(f"/dean/request/{request_id}").status_code, 403)
+
+        self._assign_hostel(4, "Box Hostel")
+        self.assertIn("Student new-dean", client.get("/dean").get_data(as_text=True))
+        self.assertEqual(client.get(f"/dean/request/{request_id}").status_code, 200)
+
+    def test_security_can_view_passes_for_all_hostels_but_needs_permissions(self):
+        self._grant_permission(2, "passes.view")
+        pass_ids = []
+        token = "security-token"
+
+        for index, hostel in enumerate((
+            "New Men's Hostel",
+            "Old Men's Hostel",
+            "Box Hostel",
+            "Annex Hostel",
+        )):
+            request_id = self._create_request(f"security-{index}", hostel)
+            cursor = self.db.execute(
+                """
+                INSERT INTO gate_passes (request_id, token)
+                VALUES (?, ?)
+                """,
+                (request_id, f"{token}-{index}"),
+            )
+            self.db.commit()
+            pass_ids.append(cursor.lastrowid)
+
+        self._login(self.security, "security_user", "/security")
+        dashboard = self.security.get("/security")
+        dashboard_text = dashboard.get_data(as_text=True).replace("&#39;", "'")
+        for hostel in (
+            "New Men's Hostel",
+            "Old Men's Hostel",
+            "Box Hostel",
+            "Annex Hostel",
+        ):
+            self.assertIn(hostel, dashboard_text)
+
+        self.assertEqual(
+            self.security.get(f"/security/verify?token={token}-0").status_code,
+            403,
+        )
+        verification = self.security.get("/security/verify")
+        self.assertEqual(
+            self.security.post(
+                f"/security/departure/{pass_ids[0]}",
+                data={"csrf_token": self._csrf_token(verification)},
+            ).status_code,
+            403,
+        )
+
+        self._grant_permission(2, "passes.verify")
+        self.assertEqual(
+            self.security.get(f"/security/verify?token={token}-0").status_code,
+            200,
+        )
+
+    def test_admin_has_unrestricted_access_without_explicit_grants(self):
+        request_ids = [
+            self._create_request(f"admin-{index}", hostel)
+            for index, hostel in enumerate((
+                "New Men's Hostel",
+                "Old Men's Hostel",
+                "Box Hostel",
+                "Annex Hostel",
+            ))
+        ]
+        self._login(self.admin, "admin_user", "/admin")
+
+        dashboard = self.admin.get("/dean")
+        for index in range(4):
+            self.assertIn(f"Student admin-{index}", dashboard.get_data(as_text=True))
+        self.assertEqual(
+            self.admin.get(f"/dean/request/{request_ids[0]}").status_code,
+            200,
+        )
+
+        access_page = self.admin.get("/admin")
+        self.assertEqual(access_page.status_code, 200)
+        self.assertIn("Full Access", access_page.get_data(as_text=True))
+
+    def test_admin_access_changes_apply_immediately_and_are_audited(self):
+        request_id = self._create_request("managed", "Annex Hostel")
+        self._grant_permission(1, "requests.view")
+        self._login(self.dean, "dean_user", "/dean")
+        self.assertEqual(self.dean.get(f"/dean/request/{request_id}").status_code, 403)
+
+        self._login(self.admin, "admin_user", "/admin")
+        access_page = self.admin.get("/admin")
+        response = self.admin.post(
+            "/admin/staff/1/access",
+            data={
+                "csrf_token": self._csrf_token(access_page),
+                "permissions": ["requests.view"],
+                "hostels": ["Annex Hostel"],
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.dean.get(f"/dean/request/{request_id}").status_code, 200)
+
+        log = self.db.execute(
+            """
+            SELECT staff_id, action, details
+            FROM audit_logs
+            WHERE action = 'staff_access_updated'
+            """
+        ).fetchone()
+        self.assertEqual(log["staff_id"], 3)
+        self.assertIn("Annex Hostel", log["details"])
+
+        access_page = self.admin.get("/admin")
+        self.admin.post(
+            "/admin/staff/1/access",
+            data={"csrf_token": self._csrf_token(access_page)},
+        )
+        self.assertEqual(self.dean.get(f"/dean/request/{request_id}").status_code, 403)
 
 
 if __name__ == "__main__":

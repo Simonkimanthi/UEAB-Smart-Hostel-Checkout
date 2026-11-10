@@ -288,6 +288,44 @@
             min-width: 230px;
         }
 
+        .access-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 14px;
+        }
+
+        .access-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 16px;
+            min-width: 0;
+        }
+
+        .access-card h3 {
+            color: var(--navy);
+            overflow-wrap: anywhere;
+        }
+
+        .check-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 8px;
+            margin: 12px 0 16px;
+        }
+
+        .check-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .check-option input {
+            width: auto;
+            margin: 2px 0 0;
+            flex: 0 0 auto;
+        }
+
         /* Arrange the new staff account form fields. */
         .create-grid {
             display: grid;
@@ -726,6 +764,80 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </section>
+
+    <!-- Configure action permissions and Dean hostel scope per staff account. -->
+    <section class="panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Staff Permissions &amp; Hostel Access</h2>
+                <p class="muted">
+                    Changes take effect immediately. Administrators always retain full access.
+                </p>
+            </div>
+        </div>
+
+        <div class="access-grid">
+            {% for member in staff %}
+                <article class="access-card">
+                    <h3>{{ member.full_name|e }}</h3>
+                    <p class="muted">
+                        {{ member.username|e }} · {{ member.role|capitalize|e }}
+                    </p>
+
+                    {% if member.role == 'admin' %}
+                        <strong>Full Access</strong>
+                    {% else %}
+                        <form method="POST"
+                              action="{{ url_for('update_staff_access', staff_id=member.id) }}">
+                            <input type="hidden"
+                                   name="csrf_token"
+                                   value="{{ csrf_token() }}">
+
+                            {% if member.role == 'dean' %}
+                                <fieldset>
+                                    <legend>Assigned hostels</legend>
+                                    <div class="check-grid">
+                                        {% for hostel in hostels %}
+                                            <label class="check-option">
+                                                <input type="checkbox"
+                                                       name="hostels"
+                                                       value="{{ hostel|e }}"
+                                                       {% if hostel in member.hostels %}checked{% endif %}>
+                                                <span>{{ hostel|e }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+                            {% else %}
+                                <p class="muted">
+                                    Security can access passes from all hostels; Dean assignments do not apply.
+                                </p>
+                            {% endif %}
+
+                            <fieldset>
+                                <legend>Granted permissions</legend>
+                                <div class="check-grid">
+                                    {% for permission in staff_permissions %}
+                                        <label class="check-option">
+                                            <input type="checkbox"
+                                                   name="permissions"
+                                                   value="{{ permission|e }}"
+                                                   {% if permission in member.permissions %}checked{% endif %}>
+                                            <span>{{ permission|replace('.', ' ')|title|e }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+
+                            <button class="primary" type="submit">Save Changes</button>
+                        </form>
+                    {% endif %}
+                </article>
+            {% else %}
+                <p class="empty">No staff accounts found.</p>
+            {% endfor %}
         </div>
     </section>
 

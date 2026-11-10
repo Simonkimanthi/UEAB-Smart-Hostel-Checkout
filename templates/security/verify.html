@@ -119,7 +119,7 @@
             </div>
 
             <!-- Only an approved, unused and unrevoked pass can be submitted. -->
-            {% if not record.revoked and not record.used_at and record.status == 'approved' %}
+            {% if can_record_departures and not record.revoked and not record.used_at and record.status == 'approved' %}
                 <form
                     method="POST"
                     action="{{ url_for('record_departure', pass_id=record.id) }}"

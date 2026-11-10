@@ -20,6 +20,7 @@
 </div>
 
 <!-- Provide direct access to the gate-pass verification facility. -->
+{% if can_verify_passes %}
 <div class="security-action">
     <div>
         <h2>Verify a gate pass</h2>
@@ -36,6 +37,7 @@
         Open Verification
     </a>
 </div>
+{% endif %}
 
 <!-- Display issued gate passes and their departure status. -->
 <div class="table-card">
@@ -58,7 +60,9 @@
                         <th scope="col">Hostel / Room</th>
                         <th scope="col">Departure date</th>
                         <th scope="col">Pass status</th>
-                        <th scope="col">Verification</th>
+                        {% if can_verify_passes %}
+                            <th scope="col">Verification</th>
+                        {% endif %}
                     </tr>
                 </thead>
 
@@ -84,6 +88,7 @@
                                 </span>
                             </td>
 
+                            {% if can_verify_passes %}
                             <td>
                                 <a
                                     class="table-link"
@@ -93,6 +98,7 @@
                                     Verify
                                 </a>
                             </td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </tbody>

@@ -1,6 +1,7 @@
 
 import re
 import os
+import json
 import secrets
 import psycopg
 import tempfile
@@ -120,6 +121,23 @@ RATE_LIMITS = {
     "login": (5, 900),       # 5 attempts per 15 minutes
     "tracking": (10, 600),  # 10 attempts per 10 minutes
 }
+
+HOSTELS = (
+    "New Men's Hostel",
+    "Old Men's Hostel",
+    "Box Hostel",
+    "Annex Hostel",
+)
+
+STAFF_PERMISSIONS = (
+    "requests.view",
+    "keys.manage",
+    "requests.approve",
+    "passes.view",
+    "passes.verify",
+    "departures.record",
+    "reports.view",
+)
 
 
 def check_rate_limit(action, identity):
@@ -241,6 +259,111 @@ def login_required(*roles):
         return wrapped
 
     return decorator
+
+
+def current_staff_role():
+    """Read the active staff role from the database, never from form data."""
+    staff_id = session.get("staff_id")
+
+    if not staff_id:
+        return None
+
+    staff = get_db().execute(
+        "SELECT role FROM staff WHERE id = ? AND active = 1",
+        (staff_id,),
+    ).fetchone()
+
+    return staff["role"] if staff else None
+
+
+def has_staff_permission(permission):
+    """Check current database grants; administrator access is unconditional."""
+    role = current_staff_role()
+
+    if role == "admin":
+        return True
+
+    if role is None:
+        return False
+
+    grant = get_db().execute(
+        """
+        SELECT allowed
+        FROM staff_permissions
+        WHERE staff_id = ? AND permission = ?
+        """,
+        (session["staff_id"], permission),
+    ).fetchone()
+
+    return bool(grant and grant["allowed"])
+
+
+def permission_required(permission):
+    """Protect a route with a live database permission check."""
+
+    def decorator(function):
+
+        @wraps(function)
+        def wrapped(*args, **kwargs):
+            if not has_staff_permission(permission):
+                abort(403, "Your account does not have permission to perform this action.")
+            return function(*args, **kwargs)
+
+        return wrapped
+
+    return decorator
+
+
+def current_staff_hostels():
+    """Return the hostels currently assigned to the signed-in staff account."""
+    rows = get_db().execute(
+        """
+        SELECT hostel
+        FROM staff_hostel_access
+        WHERE staff_id = ?
+        ORDER BY hostel
+        """,
+        (session["staff_id"],),
+    ).fetchall()
+
+    return [row["hostel"] for row in rows]
+
+
+def require_request_hostel_access(record):
+    """Enforce Dean hostel scope for both rendered pages and submitted actions."""
+    role = current_staff_role()
+
+    if role == "admin":
+        return
+
+    if role != "dean" or record["hostel"] not in current_staff_hostels():
+        abort(403, "Your account is not assigned to this hostel.")
+
+
+def visible_checkout_requests():
+    """Return all requests for Admin or only assigned-hostel requests for Deans."""
+    role = current_staff_role()
+
+    if role == "admin":
+        return get_db().execute(
+            "SELECT * FROM checkout_requests ORDER BY created_at DESC"
+        ).fetchall()
+
+    hostels = current_staff_hostels()
+
+    if not hostels:
+        return []
+
+    placeholders = ", ".join("?" for _ in hostels)
+    return get_db().execute(
+        f"""
+        SELECT *
+        FROM checkout_requests
+        WHERE hostel IN ({placeholders})
+        ORDER BY created_at DESC
+        """,
+        tuple(hostels),
+    ).fetchall()
 
 
 # ---------------------------------------------------------
@@ -668,19 +791,16 @@ def logout():
 
 @app.route("/dean")
 @login_required("dean", "admin")
+@permission_required("requests.view")
 def dean_dashboard():
 
-    records = get_db().execute(
-        """
-        SELECT *
-        FROM checkout_requests
-        ORDER BY created_at DESC
-        """
-    ).fetchall()
+    records = visible_checkout_requests()
 
     return render_template(
         "dean/dashboard.html",
         records=records,
+        can_manage_keys=has_staff_permission("keys.manage"),
+        can_approve_requests=has_staff_permission("requests.approve"),
     )
 
 
@@ -690,6 +810,7 @@ def dean_dashboard():
 
 @app.route("/dean/request/<int:request_id>", methods=["GET", "POST"])
 @login_required("dean", "admin")
+@permission_required("requests.view")
 def request_detail(request_id):
 
     db = get_db()
@@ -706,6 +827,8 @@ def request_detail(request_id):
     if record is None:
         abort(404)
 
+    require_request_hostel_access(record)
+
     if request.method == "POST":
 
         action = request.form.get("action", "")
@@ -715,6 +838,8 @@ def request_detail(request_id):
         # ---------------------------------------------
 
         if action == "key":
+            if not has_staff_permission("keys.manage"):
+                abort(403, "Your account does not have permission to manage keys.")
 
             key_status = request.form.get("key_status", "").strip()
             payment_status = request.form.get(
@@ -867,6 +992,8 @@ def request_detail(request_id):
         # ---------------------------------------------
 
         elif action == "approve":
+            if not has_staff_permission("requests.approve"):
+                abort(403, "Your account does not have permission to approve requests.")
 
             try:
                 db.execute("BEGIN IMMEDIATE")
@@ -978,6 +1105,9 @@ def request_detail(request_id):
     return render_template(
         "dean/request_detail.html",
         record=record,
+        can_manage_keys=has_staff_permission("keys.manage"),
+        can_approve_requests=has_staff_permission("requests.approve"),
+        can_view_pass=has_staff_permission("passes.view"),
     )
 
 
@@ -987,6 +1117,7 @@ def request_detail(request_id):
 
 @app.route("/dean/gate-pass/<int:request_id>")
 @login_required("dean", "admin")
+@permission_required("passes.view")
 def gate_pass(request_id):
 
     record = get_db().execute(
@@ -1007,6 +1138,8 @@ def gate_pass(request_id):
 
     if record is None:
         abort(404)
+
+    require_request_hostel_access(record)
 
     verify_path = url_for("public_gate_pass", token=record["token"])
 
@@ -1084,6 +1217,7 @@ def public_gate_pass(token):
 
 @app.route("/security")
 @login_required("security", "admin")
+@permission_required("passes.view")
 def security_dashboard():
 
     db = get_db()
@@ -1107,6 +1241,8 @@ def security_dashboard():
     return render_template(
         "security/dashboard.html",
         passes=passes,
+        can_verify_passes=has_staff_permission("passes.verify"),
+        can_record_departures=has_staff_permission("departures.record"),
     )
 
 
@@ -1116,6 +1252,7 @@ def security_dashboard():
 
 @app.route("/security/verify", methods=["GET"])
 @login_required("security", "admin")
+@permission_required("passes.verify")
 def security_verify():
 
     token = request.args.get("token", "").strip()
@@ -1144,6 +1281,7 @@ def security_verify():
         "security/verify.html",
         token=token,
         record=record,
+        can_record_departures=has_staff_permission("departures.record"),
     )
 
 
@@ -1153,6 +1291,7 @@ def security_verify():
 
 @app.route("/security/departure/<int:pass_id>", methods=["POST"])
 @login_required("security", "admin")
+@permission_required("departures.record")
 def record_departure(pass_id):
 
     db = get_db()
@@ -1465,6 +1604,152 @@ def update_staff(staff_id):
 
 
 # ---------------------------------------------------------
+# Administration: manage staff permissions and hostel access
+# ---------------------------------------------------------
+
+@app.route(
+    "/admin/staff/<int:staff_id>/access",
+    methods=["POST"],
+)
+@login_required("admin")
+def update_staff_access(staff_id):
+    db = get_db()
+    permissions = set(request.form.getlist("permissions"))
+    hostels = set(request.form.getlist("hostels"))
+
+    if permissions - set(STAFF_PERMISSIONS):
+        abort(400, "One or more selected permissions are invalid.")
+
+    try:
+        db.execute("BEGIN IMMEDIATE")
+
+        member = db.execute(
+            """
+            SELECT id, username, role
+            FROM staff
+            WHERE id = ?
+            """,
+            (staff_id,),
+        ).fetchone()
+
+        if member is None:
+            db.rollback()
+            abort(404)
+
+        if member["role"] == "admin":
+            db.rollback()
+            abort(403, "Administrator accounts always have full access.")
+
+        if member["role"] == "dean":
+            if hostels - set(HOSTELS):
+                db.rollback()
+                abort(400, "One or more selected hostels are invalid.")
+        elif hostels:
+            db.rollback()
+            abort(400, "Hostel assignments are only available for Dean accounts.")
+
+        current_permissions = {
+            row["permission"]
+            for row in db.execute(
+                """
+                SELECT permission
+                FROM staff_permissions
+                WHERE staff_id = ? AND allowed = TRUE
+                """,
+                (staff_id,),
+            ).fetchall()
+        }
+        current_hostels = {
+            row["hostel"]
+            for row in db.execute(
+                """
+                SELECT hostel
+                FROM staff_hostel_access
+                WHERE staff_id = ?
+                """,
+                (staff_id,),
+            ).fetchall()
+        }
+
+        permissions_added = sorted(permissions - current_permissions)
+        permissions_removed = sorted(current_permissions - permissions)
+        hostels_added = sorted(hostels - current_hostels)
+        hostels_removed = sorted(current_hostels - hostels)
+
+        for permission in permissions_removed:
+            db.execute(
+                """
+                DELETE FROM staff_permissions
+                WHERE staff_id = ? AND permission = ?
+                """,
+                (staff_id, permission),
+            )
+
+        for permission in permissions_added:
+            db.execute(
+                """
+                INSERT INTO staff_permissions (staff_id, permission, allowed)
+                VALUES (?, ?, TRUE)
+                ON CONFLICT (staff_id, permission)
+                DO UPDATE SET allowed = TRUE
+                """,
+                (staff_id, permission),
+            )
+
+        for hostel in hostels_removed:
+            db.execute(
+                """
+                DELETE FROM staff_hostel_access
+                WHERE staff_id = ? AND hostel = ?
+                """,
+                (staff_id, hostel),
+            )
+
+        for hostel in hostels_added:
+            db.execute(
+                """
+                INSERT INTO staff_hostel_access (staff_id, hostel)
+                VALUES (?, ?)
+                ON CONFLICT (staff_id, hostel) DO NOTHING
+                """,
+                (staff_id, hostel),
+            )
+
+        if (
+            permissions_added
+            or permissions_removed
+            or hostels_added
+            or hostels_removed
+        ):
+            audit(
+                "staff_access_updated",
+                json.dumps(
+                    {
+                        "staff_id": staff_id,
+                        "username": member["username"],
+                        "permissions_added": permissions_added,
+                        "permissions_removed": permissions_removed,
+                        "hostels_added": hostels_added,
+                        "hostels_removed": hostels_removed,
+                    },
+                    sort_keys=True,
+                ),
+                commit=False,
+            )
+
+        db.commit()
+
+    except psycopg.Error:
+        db.rollback()
+        app.logger.exception("Staff access update failed.")
+        flash("Staff permissions and hostel access could not be saved.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    flash("Staff permissions and hostel access updated.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+# ---------------------------------------------------------
 # Administration: reset staff passwords
 # ---------------------------------------------------------
 
@@ -1720,6 +2005,36 @@ def admin_dashboard():
         """
     ).fetchall()
 
+    staff_permissions = defaultdict(list)
+    for grant in db.execute(
+        """
+        SELECT staff_id, permission
+        FROM staff_permissions
+        WHERE allowed = TRUE
+        ORDER BY permission
+        """
+    ).fetchall():
+        staff_permissions[grant["staff_id"]].append(grant["permission"])
+
+    staff_hostels = defaultdict(list)
+    for assignment in db.execute(
+        """
+        SELECT staff_id, hostel
+        FROM staff_hostel_access
+        ORDER BY hostel
+        """
+    ).fetchall():
+        staff_hostels[assignment["staff_id"]].append(assignment["hostel"])
+
+    staff = [
+        {
+            **dict(member),
+            "permissions": staff_permissions[member["id"]],
+            "hostels": staff_hostels[member["id"]],
+        }
+        for member in staff
+    ]
+
     departures = db.execute(
         """
         SELECT
@@ -1771,6 +2086,8 @@ def admin_dashboard():
         "admin/dashboard.html",
         stats=stats,
         staff=staff,
+        hostels=HOSTELS,
+        staff_permissions=STAFF_PERMISSIONS,
         departures=departures,
         outstanding=outstanding,
         logs=logs,

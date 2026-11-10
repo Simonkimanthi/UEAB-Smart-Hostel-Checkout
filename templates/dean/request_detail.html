@@ -71,7 +71,7 @@
         </div>
 
         <!-- Only approved requests can access their issued gate pass. -->
-        {% if record.status == 'approved' %}
+        {% if record.status == 'approved' and can_view_pass %}
             <a
                 class="btn btn-primary full-button"
                 href="{{ url_for('gate_pass', request_id=record.id) }}"
@@ -92,6 +92,7 @@
             </strong>
         </div>
 
+        {% if can_manage_keys %}
         <form method="POST" class="stack-form">
 
             <input
@@ -202,6 +203,9 @@
             </button>
         </form>
 
+        {% endif %}
+
+        {% if can_approve_requests %}
         <div class="divider"></div>
 
         <!-- Submit the separate approval action after clearance review. -->
@@ -233,6 +237,7 @@
                 Approve and Issue Gate Pass
             </button>
         </form>
+        {% endif %}
     </section>
 
 </div>
